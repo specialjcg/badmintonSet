@@ -2,7 +2,6 @@
   "plugins": [
     "@typescript-eslint",
     "prettier",
-    "unicorn" ,
     "import"
   ],
   "extends": [

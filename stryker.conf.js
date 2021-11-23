@@ -1,9 +1,11 @@
 /**
  * @type {import('@stryker-mutator/api/core').StrykerOptions}
  */
-module.exports = function(config) {
+module.exports = function (config) {
   config.set({
-    mutate: ["/home/jcgouleau/IdeaProjects/kataFunctionnal/kataaddition.ts"],
+    mutate: [
+      "/home/jcgouleau/IdeaProjects/kataFunctionnal/kataaddition.spec.ts",
+    ],
     mutator: "typescript",
     testRunner: "jest",
     reporters: ["progress", "clear-text", "html"],
@@ -14,5 +16,5 @@ module.exports = function(config) {
     },
     timeoutMS: 60000,
     maxConcurrentTestRunners: 4,
-  })
-}
+  });
+};
