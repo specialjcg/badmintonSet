@@ -66,11 +66,15 @@ const assignFields = (
   matchesWithoutField: ((field: Field) => Match)[]
 ): Match[] => {
   if (fields.length <= matchesWithoutField.length) {
-    return fields.map((field, index) => matchesWithoutField[index](field));
+    return fields.map((field, index) => {
+      const matchWithoutField = matchesWithoutField[index];
+      return matchWithoutField(field);
+    });
   }
-  return matchesWithoutField.map((matchWithoutField, index) =>
-    matchWithoutField(fields[index])
-  );
+  return matchesWithoutField.map((matchWithoutField, index) => {
+    const field = fields[index];
+    return matchWithoutField(field);
+  });
 };
 
 describe("match", () => {
@@ -198,5 +202,6 @@ describe("match", () => {
   });
   //TODO mettre en place les eslint /prettier à voir prochaine session
   //TODO voir aux nombre limite de terrain
-  //TODO mettre le niveau  et au besoin le nom (cosmétique)
+  //todo refacto AssignField afin d'éviter le if voir function ZIP
+  //TODO mettre le niveau
 });
