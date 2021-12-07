@@ -23,8 +23,6 @@ const createMatch =
     player2,
   });
 
-type Player = object;
-
 function isEven(index: number) {
   return index % 2 === 0;
 }
