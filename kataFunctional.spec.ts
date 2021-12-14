@@ -23,9 +23,7 @@ const createMatch =
     player2,
   });
 
-function isEven(index: number) {
-  return index % 2 === 0;
-}
+const isEven = (index: number): boolean => index % 2 === 0;
 
 const addMatchWithoutField = (
   matchesWithoutField: ((field: Field) => Match)[],
@@ -35,11 +33,11 @@ const addMatchWithoutField = (
 
 const createPlayerMatch = (
   listPlayer: Player[]
-): ((field: Field) => Match)[] => {
-  return listPlayer.reduce(
+): ((field: Field) => Match)[] =>
+   listPlayer.reduce(
     (
       matchesWithoutField: ((field: Field) => Match)[],
-      serverPlayer,
+      serverPlayer:Player,
       index: number,
       playersToSplit: Player[]
     ) => {
@@ -54,28 +52,27 @@ const createPlayerMatch = (
     []
   );
 
-  // let result: ((field: Field) => Match)[] = [];
-  // for (let i = 0; i < listPlayer.length; i += 2) {
-  //   result = [...result, createMatch(listPlayer[i])(listPlayer[i + 1])];
-  // }
-  // return result;
-};
+const buildMatchesWhenLessFieldsThanPlayers = (matchesWithoutField: MatchWithoutField[], fields: Field[]): Match[] =>
+  fields.map((field: Field, index: number): Match =>
+    matchesWithoutField[index](field));
+
+const buildMatchesWhenLessPlayersThanFields = (matchesWithoutField: MatchWithoutField[], fields: Field[]): Match[] =>
+  matchesWithoutField.map((matchWithoutField: MatchWithoutField, index: number): Match =>
+    matchWithoutField(fields[index]));
+
+const hasLessFieldsThanPlayers = (fields: Field[], matchesWithoutField: MatchWithoutField[]): boolean =>
+  fields.length <= matchesWithoutField.length;
 
 const assignFields = (
   fields: Field[],
-  matchesWithoutField: ((field: Field) => Match)[]
-): Match[] => {
-  if (fields.length <= matchesWithoutField.length) {
-    return fields.map((field, index) => {
-      const matchWithoutField = matchesWithoutField[index];
-      return matchWithoutField(field);
-    });
-  }
-  return matchesWithoutField.map((matchWithoutField, index) => {
-    const field = fields[index];
-    return matchWithoutField(field);
-  });
-};
+  matchesWithoutField: MatchWithoutField[]
+): { matches: Match[]; standbyPlayers: Player[] } => (
+  {
+    matches: (hasLessFieldsThanPlayers(fields, matchesWithoutField) ?
+      buildMatchesWhenLessFieldsThanPlayers(matchesWithoutField, fields) :
+      buildMatchesWhenLessPlayersThanFields(matchesWithoutField, fields) ),
+    standbyPlayers: [ { nom: "jeannette" } ]
+});
 
 describe("match", () => {
   it("should create a match with 2 players", () => {
@@ -200,8 +197,26 @@ describe("match", () => {
       },
     ]);
   });
-  //TODO mettre en place les eslint /prettier à voir prochaine session
-  //TODO voir aux nombre limite de terrain
-  //todo refacto AssignField afin d'éviter le if voir function ZIP
+
+  it(`should get a standby player when one field and 3 players`, (): void => {
+    const player1: ServerPlayer = { nom: "jeanne" };
+    const player2: ReceiverPlayer = { nom: "serge" };
+    const player3: ServerPlayer = { nom: "jeannette" };
+    const listPlayer: Player[] = [player1, player2, player3];
+    const field1: Field = {};
+    const fields: Field[] = [field1];
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
+
+    const { _, standbyPlayers }: { matches: Match[]; standbyPlayers: Player[]} = assignFields(fields, matchesWithoutField);
+
+    expect(standbyPlayers).toStrictEqual([player3]);
+  });
+
+  // TODO 1 field 3 player 2 players play
+  //TODO 1 field 4 players 4 players  play
+  //TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
+  // TODO another player on standby
+
+  //TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
   //TODO mettre le niveau
 });

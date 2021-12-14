@@ -9,6 +9,7 @@
 - possibilité de faire les rencontres sur 6 tours réévaluer par résultats 
 sur 1 semaine
 - état se calcule tour a tour
+- vérifier le nombre de standby
 - veiller à assembler les doubles par niveau et sexe
 - Maximum de doubles ou à la demande (simples)
 - possibilité en cas de joueur impair d'avoir un joueur au repos

@@ -1,6 +1,6 @@
-dist/
+/dist
 coverage/
 node_modules/
-.eslintrc.js
-.idea/
+src/assets/
 .git/
+.idea/

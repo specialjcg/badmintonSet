@@ -4,7 +4,7 @@
 module.exports = function (config) {
   config.set({
     mutate: [
-      "/home/jcgouleau/IdeaProjects/kataFunctionnal/kataaddition.spec.ts",
+      "/home/jcgouleau/IdeaProjects/kataFunctionnal/kataFunctional.spec.ts",
     ],
     mutator: "typescript",
     testRunner: "jest",
