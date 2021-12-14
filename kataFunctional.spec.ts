@@ -14,9 +14,13 @@ type Players = {
 };
 type Field = object;
 
-const createMatch =
-  (player1: ServerPlayer) =>
-  (player2: ReceiverPlayer) =>
+type MatchWithoutField = (field: Field) => Match;
+
+type MatchWithOnlyServerPlayer = (player2: ReceiverPlayer) => MatchWithoutField;
+
+const createMatch: (player1: ServerPlayer) => MatchWithOnlyServerPlayer =
+  (player1: ServerPlayer): MatchWithOnlyServerPlayer =>
+  (player2: ReceiverPlayer): MatchWithoutField =>
   (field: Field): Match => ({
     field,
     player1,
@@ -25,11 +29,15 @@ const createMatch =
 
 const isEven = (index: number): boolean => index % 2 === 0;
 
-const addMatchWithoutField = (
-  matchesWithoutField: ((field: Field) => Match)[],
+const addMatchWithoutField: (
+  matchesWithoutField: MatchWithoutField[],
   serverPlayer: Player,
   receiverPlayer: Player
-) => [...matchesWithoutField, createMatch(serverPlayer)(receiverPlayer)];
+) => MatchWithoutField[] = (
+  matchesWithoutField: MatchWithoutField[],
+  serverPlayer: Player,
+  receiverPlayer: Player
+): MatchWithoutField[] => [...matchesWithoutField, createMatch(serverPlayer)(receiverPlayer)];
 
 const createPlayerMatch = (
   listPlayer: Player[]
@@ -74,31 +82,31 @@ const assignFields = (
     standbyPlayers: [ { nom: "jeannette" } ]
 });
 
-describe("match", () => {
-  it("should create a match with 2 players", () => {
+describe("match", (): void => {
+  it("should create a match with 2 players", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
     const field: Field = {};
-    const match = createMatch(player1)(player2)(field);
+    const match: Match = createMatch(player1)(player2)(field);
 
     expect(match).toStrictEqual({ field, player1, player2 });
   });
-  it("should create a List of tuple of Server/Receiver from playerList", () => {
+  it("should create a List of tuple of Server/Receiver from playerList", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
     const field: Field = {};
-    const match = createMatch(player1)(player2)(field);
+    const match: Match = createMatch(player1)(player2)(field);
 
     expect(match).toStrictEqual({ field, player1, player2 });
   });
-  it("should create a List of tuple of Server/Receiver from playerList", () => {
+  it("should create a List of tuple of Server/Receiver from playerList", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
     const field: Field = {};
     const listPlayer: Player[] = [player1, player2];
-    const matchesWithoutField = createPlayerMatch(listPlayer);
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
     expect(
-      matchesWithoutField.map((matchWithoutfield) => matchWithoutfield(field))
+      matchesWithoutField.map((matchWithoutField: MatchWithoutField): Match => matchWithoutField(field))
     ).toStrictEqual([
       {
         field,
@@ -107,16 +115,16 @@ describe("match", () => {
       },
     ]);
   });
-  it("should create a List of tuple of Server/Receiver from playerList with 4 players", () => {
+  it("should create a List of tuple of Server/Receiver from playerList with 4 players", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
     const player3: ServerPlayer = { nom: "jeannette" };
     const player4: ReceiverPlayer = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
     const field: Field = {};
-    const matchesWithoutField = createPlayerMatch(listPlayer);
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
     expect(
-      matchesWithoutField.map((matchWithoutfield) => matchWithoutfield(field))
+      matchesWithoutField.map((matchWithoutField: MatchWithoutField): Match => matchWithoutField(field))
     ).toStrictEqual([
       {
         field,
@@ -139,9 +147,9 @@ describe("match", () => {
     const field1: Field = {};
     const field2: Field = {};
     const fields: Field[] = [field1, field2];
-    const matchesWithoutField = createPlayerMatch(listPlayer);
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const matches = assignFields(fields, matchesWithoutField);
+    const { matches }: { matches: Match[] } = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
@@ -164,9 +172,9 @@ describe("match", () => {
     const field1: Field = {};
     const field2: Field = {};
     const fields: Field[] = [field1, field2];
-    const matchesWithoutField = createPlayerMatch(listPlayer);
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const matches = assignFields(fields, matchesWithoutField);
+    const { matches }: { matches: Match[] }  = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
@@ -185,9 +193,9 @@ describe("match", () => {
     const listPlayer: Player[] = [player1, player2, player3, player4];
     const field1: Field = {};
     const fields: Field[] = [field1];
-    const matchesWithoutField = createPlayerMatch(listPlayer);
+    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const matches = assignFields(fields, matchesWithoutField);
+    const { matches }: { matches: Match[] } = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
