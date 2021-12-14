@@ -218,8 +218,8 @@ describe("match", (): void => {
   });
 
   // TODO 1 field 3 player 2 players play
-  //TODO 1 field 4 players 4 players  play
-  //TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
+  // TODO 1 field 4 players 4 players  play
+  // TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
   // TODO another player on standby
 
   //TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
