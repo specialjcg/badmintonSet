@@ -8,10 +8,7 @@ type Match = {
   player1: ServerPlayer;
   player2: ReceiverPlayer;
 };
-type Players = {
-  player1: ServerPlayer;
-  player2: ReceiverPlayer;
-};
+
 type Field = object;
 
 type MatchWithoutField = (field: Field) => Match;
