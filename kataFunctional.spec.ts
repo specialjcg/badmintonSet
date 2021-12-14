@@ -41,19 +41,17 @@ const createPlayerMatch = (
 ): ((field: Field) => Match)[] =>
    listPlayer.reduce(
     (
-      matchesWithoutField: ((field: Field) => Match)[],
+      matchesWithoutField: MatchWithoutField[],
       serverPlayer:Player,
       index: number,
       playersToSplit: Player[]
-    ) => {
-      return isEven(index)
+    ): MatchWithoutField[] => (isEven(index)
         ? addMatchWithoutField(
             matchesWithoutField,
             serverPlayer,
             playersToSplit[index + 1]
           )
-        : matchesWithoutField;
-    },
+        : matchesWithoutField),
     []
   );
 
@@ -96,6 +94,7 @@ describe("match", (): void => {
 
     expect(match).toStrictEqual({ field, player1, player2 });
   });
+
   it("should create a List of tuple of Server/Receiver from playerList", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
@@ -112,6 +111,7 @@ describe("match", (): void => {
       },
     ]);
   });
+
   it("should create a List of tuple of Server/Receiver from playerList with 4 players", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
@@ -135,6 +135,7 @@ describe("match", (): void => {
       },
     ]);
   });
+
   it("should affect distinct fields to  players without fields", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
@@ -161,6 +162,7 @@ describe("match", (): void => {
       },
     ]);
   });
+
   it("should affect distinct fields to  players without fields when less players than fields", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
@@ -181,6 +183,7 @@ describe("match", (): void => {
       },
     ]);
   });
+
   it("should affect distinct fields to  players without fields when less fields than players", (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
@@ -212,7 +215,7 @@ describe("match", (): void => {
     const fields: Field[] = [field1];
     const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const { _, standbyPlayers }: { matches: Match[]; standbyPlayers: Player[]} = assignFields(fields, matchesWithoutField);
+    const { standbyPlayers }: { standbyPlayers: Player[] } = assignFields(fields, matchesWithoutField);
 
     expect(standbyPlayers).toStrictEqual([player3]);
   });
@@ -222,6 +225,6 @@ describe("match", (): void => {
   // TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
   // TODO another player on standby
 
-  //TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
-  //TODO mettre le niveau
+  // TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
+  // TODO mettre le niveau
 });
