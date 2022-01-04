@@ -159,7 +159,7 @@ describe("match", (): void => {
     const fields: Field[] = [field1, field2];
     const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const { matches }: { matches: Match[] } = assignFields(fields, matchesWithoutField);
+    const matches : Match[] = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
@@ -185,7 +185,7 @@ describe("match", (): void => {
     const fields: Field[] = [field1, field2];
     const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const { matches }: { matches: Match[] }  = assignFields(fields, matchesWithoutField);
+    const matches : Match[] = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
@@ -207,7 +207,7 @@ describe("match", (): void => {
     const fields: Field[] = [field1];
     const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const { matches }: { matches: Match[] } = assignFields(fields, matchesWithoutField);
+    const matches : Match[] = assignFields(fields, matchesWithoutField);
 
     expect(matches).toStrictEqual([
       {
@@ -224,8 +224,9 @@ describe("match", (): void => {
     const player3: ServerPlayer = { nom: "jeanpaul" };
     const listPlayer: Player[] = [player1, player2, player3];
 
-    const { standbyPlayers }: { standbyPlayers: Player[] } = assignFields(fields, matchesWithoutField);
+    const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
 
+    expect(playersInGame).toStrictEqual([player1, player2]);
     expect(standbyPlayers).toStrictEqual([player3]);
   });
 
