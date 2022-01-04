@@ -230,7 +230,6 @@ describe("match", (): void => {
     expect(standbyPlayers).toStrictEqual([player3]);
   });
 
-
   it(`should get 1 field with 4 players without standbyplayer`, (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
