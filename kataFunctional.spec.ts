@@ -69,13 +69,25 @@ const hasLessFieldsThanPlayers = (fields: Field[], matchesWithoutField: MatchWit
 const assignFields = (
   fields: Field[],
   matchesWithoutField: MatchWithoutField[]
-): { matches: Match[]; standbyPlayers: Player[] } => (
-  {
-    matches: (hasLessFieldsThanPlayers(fields, matchesWithoutField) ?
-      buildMatchesWhenLessFieldsThanPlayers(matchesWithoutField, fields) :
-      buildMatchesWhenLessPlayersThanFields(matchesWithoutField, fields) ),
-    standbyPlayers: [ { nom: "jeannette" } ]
-});
+): Match[] =>
+  (hasLessFieldsThanPlayers(fields, matchesWithoutField) ?
+    buildMatchesWhenLessFieldsThanPlayers(matchesWithoutField, fields) :
+    buildMatchesWhenLessPlayersThanFields(matchesWithoutField, fields));
+
+const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
+  if (isEven(listPlayer.length)) {
+    return {
+      playersInGame: listPlayer,
+      standbyPlayers: []
+    };
+  }
+
+  return {
+    playersInGame: [...listPlayer].splice(0,listPlayer.length-1),
+    standbyPlayers: [listPlayer[listPlayer.length - 1]]
+  };
+
+}
 
 describe("match", (): void => {
   it("should create a match with 2 players", (): void => {
@@ -206,21 +218,31 @@ describe("match", (): void => {
     ]);
   });
 
-  it(`should get a standby player when one field and 3 players`, (): void => {
+  it(`should split listplayer in to playeringame and standyplayer with 3 players`, (): void => {
     const player1: ServerPlayer = { nom: "jeanne" };
     const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeannette" };
+    const player3: ServerPlayer = { nom: "jeanpaul" };
     const listPlayer: Player[] = [player1, player2, player3];
-    const field1: Field = {};
-    const fields: Field[] = [field1];
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
     const { standbyPlayers }: { standbyPlayers: Player[] } = assignFields(fields, matchesWithoutField);
 
     expect(standbyPlayers).toStrictEqual([player3]);
   });
 
-  // TODO 1 field 3 player 2 players play
+
+  it(`should get 1 field with 4 players without standbyplayer`, (): void => {
+    const player1: ServerPlayer = { nom: "jeanne" };
+    const player2: ReceiverPlayer = { nom: "serge" };
+    const player3: ServerPlayer = { nom: "jeanpaul" };
+    const player4: ServerPlayer = { nom: "alice" };
+    const listPlayer: Player[] = [player1, player2, player3, player4];
+
+    const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
+
+    expect(playersInGame).toStrictEqual([player1, player2, player3, player4]);
+    expect(standbyPlayers).toStrictEqual([]);
+  });
+
   // TODO 1 field 4 players 4 players  play
   // TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
   // TODO another player on standby
