@@ -10,51 +10,53 @@ type MatchDouble = {
   players: [Player, Player, Player, Player];
 };
 
-type MatchWithOnlyServerPlayer = (player2: ReceiverPlayer) => MatchWithoutField;
+type MatchWithOnlyServerPlayer = (player2: Player) => Match;
 
-const createMatch: (player1: ServerPlayer) => MatchWithOnlyServerPlayer =
-  (player1: ServerPlayer): MatchWithOnlyServerPlayer =>
-  (player2: ReceiverPlayer): MatchWithoutField =>
-  (field: Field): Match => ({
-    field,
-    player1,
-    player2,
+const createMatch: (player1: Player) => MatchWithOnlyServerPlayer =
+  (player1: Player): MatchWithOnlyServerPlayer =>
+  (player2: Player): Match =>  ({
+    players: [player1, player2]
   });
 
 const isEven = (index: number): boolean => index % 2 === 0;
 
-const addMatchWithoutField: (
-  matchesWithoutField: MatchWithoutField[],
+const addMatch: (
+  matches: Match[],
   serverPlayer: Player,
   receiverPlayer: Player
-) => MatchWithoutField[] = (
-  matchesWithoutField: MatchWithoutField[],
+) => Match[] = (
+  matches: Match[],
   serverPlayer: Player,
   receiverPlayer: Player
-): MatchWithoutField[] => [...matchesWithoutField, createMatch(serverPlayer)(receiverPlayer)];
+): Match[] => [...matches, createMatch(serverPlayer)(receiverPlayer)];
 
-const createPlayerMatch = (
-  listPlayer: Player[]
-): ((field: Field) => Match)[] =>
-   listPlayer.reduce(
+const createPlayerSimpleMatch = ( listPlayer: Player[]): Match[] =>
+  listPlayer.reduce(
     (
-      matchesWithoutField: MatchWithoutField[],
-      serverPlayer:Player,
+      matches: Match[],
+      serverPlayer: Player,
       index: number,
       playersToSplit: Player[]
-    ): MatchWithoutField[] => (isEven(index)
-        ? addMatchWithoutField(
-            matchesWithoutField,
-            serverPlayer,
-            playersToSplit[index + 1]
-          )
-        : matchesWithoutField),
+    ): Match[] => (isEven(index)
+      ? addMatch(
+        matches,
+        serverPlayer,
+        playersToSplit[index + 1]
+      )
+      : matches),
     []
   );
 
-const buildMatchesWhenLessFieldsThanPlayers = (matchesWithoutField: MatchWithoutField[], fields: Field[]): Match[] =>
-  fields.map((field: Field, index: number): Match =>
-    matchesWithoutField[index](field));
+const createPlayerDoubleMatch = ( listPlayer: Player[]): Match[] => [
+  {
+    players: [
+      listPlayer[0],
+      listPlayer[1],
+      listPlayer[2],
+      listPlayer[3]
+    ]
+  }
+];
 
 const selectPlayersForSimpleMatches = (listPlayer: Player[], availableFieldsCount: number): Player[] =>
   listPlayer.slice(0, availableFieldsCount * 2);
@@ -74,34 +76,31 @@ const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPla
   }
 
   return {
-    playersInGame: [...listPlayer].splice(0,listPlayer.length-1),
+    playersInGame: [...listPlayer].splice(0, listPlayer.length - 1),
     standbyPlayers: [listPlayer[listPlayer.length - 1]]
   };
-
 }
 
 describe("match", (): void => {
   it("should create a match with 2 players", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const field: Field = {};
-    const match: Match = createMatch(player1)(player2)(field);
-
-    expect(match).toStrictEqual({ field, player1, player2 });
-  });
-  it("should create a List of tuple of Server/Receiver from playerList", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const field: Field = {};
-    const match: Match = createMatch(player1)(player2)(field);
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const match: Match = createMatch(player1)(player2);
 
     expect(match).toStrictEqual({ field, player1, player2 });
   });
 
   it("should create a List of tuple of Server/Receiver from playerList", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const field: Field = {};
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const match: Match = createMatch(player1)(player2);
+
+    expect(match).toStrictEqual({ players: [player1, player2] });
+  });
+
+  it("should create a List of tuple of Server_Receiver from playerList", (): void => {
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
     const listPlayer: Player[] = [player1, player2];
     const matches: Match[] = createPlayerMatch(listPlayer, 1);
     expect(
@@ -116,10 +115,10 @@ describe("match", (): void => {
   });
 
   it("should create a List of tuple of Server/Receiver from playerList with 4 players", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeannette" };
-    const player4: ReceiverPlayer = { nom: "sergei" };
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeannette" };
+    const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const matches: Match[] = createPlayerMatch(listPlayer, 2);
@@ -127,44 +126,48 @@ describe("match", (): void => {
       matches)
     .toStrictEqual([
       {
-        field,
-        player1,
-        player2,
+        players: [
+          player1,
+          player2
+        ]
       },
       {
-        field,
-        player1: player3,
-        player2: player4,
+        players: [
+          player3,
+          player4
+        ]
       },
     ]);
   });
 
   it("should affect distinct fields to  players without fields", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeannette" };
-    const player4: ReceiverPlayer = { nom: "sergei" };
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeannette" };
+    const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const matches: Match[] = createPlayerMatch(listPlayer, 2);
 
     expect(matches).toStrictEqual([
       {
-        field: field1,
-        player1,
-        player2,
+        players: [
+          player1,
+          player2
+        ]
       },
       {
-        field: field2,
-        player1: player3,
-        player2: player4,
+        players: [
+          player3,
+          player4
+        ]
       },
     ]);
   });
 
   it("should affect distinct fields to  players without fields when less players than fields", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
 
     const listPlayer: Player[] = [player1, player2];
 
@@ -172,18 +175,19 @@ describe("match", (): void => {
 
     expect(matches).toStrictEqual([
       {
-        field: field1,
-        player1,
-        player2,
+        players: [
+          player1,
+          player2
+        ]
       },
     ]);
   });
 
-  it("should affect distinct fields to  players without fields when less fields than players", (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeannette" };
-    const player4: ReceiverPlayer = { nom: "sergei" };
+  it("should affect distinct fields to players without fields when less fields than players", (): void => {
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeannette" };
+    const player4: Player = { nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
     const field1: Field = {};
@@ -194,17 +198,18 @@ describe("match", (): void => {
 
     expect(matches).toStrictEqual([
       {
-        field: field1,
-        player1,
-        player2,
+        players:[
+          player1,
+          player2
+        ]
       },
     ]);
   });
 
   it(`should split listplayer in to playeringame and standyplayer with 3 players`, (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeanpaul" };
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeanpaul" };
     const listPlayer: Player[] = [player1, player2, player3];
 
     const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
@@ -214,10 +219,10 @@ describe("match", (): void => {
   });
 
   it(`should get 1 field with 4 players without standbyplayer`, (): void => {
-    const player1: ServerPlayer = { nom: "jeanne" };
-    const player2: ReceiverPlayer = { nom: "serge" };
-    const player3: ServerPlayer = { nom: "jeanpaul" };
-    const player4: ServerPlayer = { nom: "alice" };
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeanpaul" };
+    const player4: Player = { nom: "alice" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
