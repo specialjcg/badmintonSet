@@ -1,17 +1,14 @@
 type Player = { nom: string };
 
-type ServerPlayer = Player;
-type ReceiverPlayer = Player;
+type Match = MatchDouble | MatchSimple
 
-type Match = {
-  field: Field;
-  player1: ServerPlayer;
-  player2: ReceiverPlayer;
+type MatchSimple = {
+  players: [Player, Player];
 };
 
-type Field = object;
-
-type MatchWithoutField = (field: Field) => Match;
+type MatchDouble = {
+  players: [Player, Player, Player, Player];
+};
 
 type MatchWithOnlyServerPlayer = (player2: ReceiverPlayer) => MatchWithoutField;
 
@@ -59,20 +56,14 @@ const buildMatchesWhenLessFieldsThanPlayers = (matchesWithoutField: MatchWithout
   fields.map((field: Field, index: number): Match =>
     matchesWithoutField[index](field));
 
-const buildMatchesWhenLessPlayersThanFields = (matchesWithoutField: MatchWithoutField[], fields: Field[]): Match[] =>
-  matchesWithoutField.map((matchWithoutField: MatchWithoutField, index: number): Match =>
-    matchWithoutField(fields[index]));
+const selectPlayersForSimpleMatches = (listPlayer: Player[], availableFieldsCount: number): Player[] =>
+  listPlayer.slice(0, availableFieldsCount * 2);
 
-const hasLessFieldsThanPlayers = (fields: Field[], matchesWithoutField: MatchWithoutField[]): boolean =>
-  fields.length <= matchesWithoutField.length;
-
-const assignFields = (
-  fields: Field[],
-  matchesWithoutField: MatchWithoutField[]
-): Match[] =>
-  (hasLessFieldsThanPlayers(fields, matchesWithoutField) ?
-    buildMatchesWhenLessFieldsThanPlayers(matchesWithoutField, fields) :
-    buildMatchesWhenLessPlayersThanFields(matchesWithoutField, fields));
+const createPlayerMatch = (
+  listPlayer: Player[],
+  availableFieldsCount: number,
+  preferDouble: boolean = false
+): Match[] => (preferDouble ? createPlayerDoubleMatch(listPlayer) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
 
 const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
   if (isEven(listPlayer.length)) {
@@ -112,9 +103,9 @@ describe("match", (): void => {
     const player2: ReceiverPlayer = { nom: "serge" };
     const field: Field = {};
     const listPlayer: Player[] = [player1, player2];
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
     expect(
-      matchesWithoutField.map((matchWithoutField: MatchWithoutField): Match => matchWithoutField(field))
+      matches
     ).toStrictEqual([
       {
         field,
@@ -130,11 +121,11 @@ describe("match", (): void => {
     const player3: ServerPlayer = { nom: "jeannette" };
     const player4: ReceiverPlayer = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const field: Field = {};
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
+
+    const matches: Match[] = createPlayerMatch(listPlayer, 2);
     expect(
-      matchesWithoutField.map((matchWithoutField: MatchWithoutField): Match => matchWithoutField(field))
-    ).toStrictEqual([
+      matches)
+    .toStrictEqual([
       {
         field,
         player1,
@@ -154,12 +145,8 @@ describe("match", (): void => {
     const player3: ServerPlayer = { nom: "jeannette" };
     const player4: ReceiverPlayer = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const field1: Field = {};
-    const field2: Field = {};
-    const fields: Field[] = [field1, field2];
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const matches : Match[] = assignFields(fields, matchesWithoutField);
+    const matches: Match[] = createPlayerMatch(listPlayer, 2);
 
     expect(matches).toStrictEqual([
       {
@@ -180,12 +167,8 @@ describe("match", (): void => {
     const player2: ReceiverPlayer = { nom: "serge" };
 
     const listPlayer: Player[] = [player1, player2];
-    const field1: Field = {};
-    const field2: Field = {};
-    const fields: Field[] = [field1, field2];
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
 
-    const matches : Match[] = assignFields(fields, matchesWithoutField);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -243,10 +226,16 @@ describe("match", (): void => {
     expect(standbyPlayers).toStrictEqual([]);
   });
 
-  // TODO 1 field 4 players 4 players  play
-  // TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
-  // TODO another player on standby
+  /*
+   * TODO move selectPlayersForSimpleMatches (same for doubles) in pollPlayer to get standbyPlayers, createPlayerMatch should not be called directly
+   *  First I create my pool, I get the playable payers (with specific types) and the standby, now I can call a function that create matches and only accept
+   * TODO 1 field 4 players 4 players  play
+   * TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
+   * TODO another player on standby
+   */
 
-  // TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
-  // TODO mettre le niveau
+  /*
+   * TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
+   * TODO mettre le niveau
+   */
 });
