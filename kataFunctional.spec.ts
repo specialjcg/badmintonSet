@@ -87,7 +87,7 @@ describe("match", (): void => {
     const player2: Player = { nom: "serge" };
     const match: Match = createMatch(player1)(player2);
 
-    expect(match).toStrictEqual({ field, player1, player2 });
+    expect(match).toStrictEqual({ players: [player1, player2] });
   });
 
   it("should create a List of tuple of Server/Receiver from playerList", (): void => {
@@ -107,9 +107,8 @@ describe("match", (): void => {
       matches
     ).toStrictEqual([
       {
-        field,
-        player1,
-        player2,
+
+        players: [player1, player2]
       },
     ]);
   });
@@ -190,11 +189,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const field1: Field = {};
-    const fields: Field[] = [field1];
-    const matchesWithoutField: MatchWithoutField[] = createPlayerMatch(listPlayer);
-
-    const matches : Match[] = assignFields(fields, matchesWithoutField);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -229,6 +224,40 @@ describe("match", (): void => {
 
     expect(playersInGame).toStrictEqual([player1, player2, player3, player4]);
     expect(standbyPlayers).toStrictEqual([]);
+  });
+
+  it("should affect 1 field for a double match", (): void => {
+    const player1: Player = { nom: "jeanne" };
+    const player2: Player = { nom: "serge" };
+    const player3: Player = { nom: "jeannette" };
+    const player4: Player = { nom: "sergei" };
+    const player5: Player = { nom: "henri" };
+    const player6: Player = { nom: "alfred" };
+    const player7: Player = { nom: "jeannette gtr" };
+    const player8: Player = { nom: "marie" };
+
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7, player8];
+    const matches: Match[] = createPlayerMatch(listPlayer, 2, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player2,
+          player3,
+          player4
+        ]
+      },
+      {
+        players: [
+          player5,
+          player6,
+          player7,
+          player8
+        ]
+      },
+    ]);
   });
 
   /*
