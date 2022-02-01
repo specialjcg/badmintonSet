@@ -68,11 +68,15 @@ const createPlayerDoubleMatch = (listPlayer: Player[]): Match<Double>[] => listP
 const selectPlayersForSimpleMatches = (listPlayer: Player[], availableFieldsCount: number): Player[] =>
   listPlayer.slice(0, availableFieldsCount * 2);
 
+
+const selectPlayersForDoubleMatches = (listPlayer: Player[], availableFieldsCount: number): Player[] =>
+  listPlayer.slice(0, availableFieldsCount * 4);
+
 const createPlayerMatch = (
   listPlayer: Player[],
   availableFieldsCount: number,
   preferDouble: boolean = false
-): Match[] => (preferDouble ? createPlayerDoubleMatch(listPlayer) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
+): Match<Double | Simple>[] => (preferDouble ? createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
 
 const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
   if (isEven(listPlayer.length)) {
@@ -233,7 +237,7 @@ describe("match", (): void => {
     expect(standbyPlayers).toStrictEqual([]);
   });
 
-  it("should affect 1 field for a double match", (): void => {
+  it("should affect 2 fields for 4 players", (): void => {
     const player1: Player = { nom: "jeanne" };
     const player2: Player = { nom: "serge" };
     const player3: Player = { nom: "jeannette" };
@@ -269,7 +273,7 @@ describe("match", (): void => {
 
   /*
    * TODO move selectPlayersForSimpleMatches (same for doubles) in pollPlayer to get standbyPlayers, createPlayerMatch should not be called directly
-   *  First I create my pool, I get the playable payers (with specific types) and the standby, now I can call a function that create matches and only accept
+   * First I create my pool, I get the playable payers (with specific types) and the standby, now I can call a function that create matches and only accept
    * TODO 1 field 4 players 4 players  play
    * TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
    * TODO another player on standby
@@ -278,5 +282,8 @@ describe("match", (): void => {
   /*
    * TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
    * TODO mettre le niveau
+   * TODO contraindre les types
+   *  [Player, Player][] => liste de joueurs pour des simples
+   *  [Player, Player, Player, Player][] => liste de joueurs pour des doubles
    */
 });
