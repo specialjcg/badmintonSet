@@ -12,30 +12,30 @@ type MatchWithOnlyServerPlayer = (player2: Player) => Match<Simple>;
 
 const createMatch: (player1: Player) => MatchWithOnlyServerPlayer =
   (player1: Player): MatchWithOnlyServerPlayer =>
-  (player2: Player): Match =>  ({
+  (player2: Player): Match<Simple> =>  ({
     players: [player1, player2]
   });
 
 const isEven = (index: number): boolean => index % 2 === 0;
 
 const addMatch: (
-  matches: Match[],
+  matches: Match<Simple>[],
   serverPlayer: Player,
   receiverPlayer: Player
-) => Match[] = (
-  matches: Match[],
+) => Match<Simple>[] = (
+  matches: Match<Simple>[],
   serverPlayer: Player,
   receiverPlayer: Player
-): Match[] => [...matches, createMatch(serverPlayer)(receiverPlayer)];
+): Match<Simple>[] => [...matches, createMatch(serverPlayer)(receiverPlayer)];
 
 const createPlayerSimpleMatch = (listPlayer: Player[]): Match<Simple>[] =>
   listPlayer.reduce(
     (
-      matches: Match[],
+      matches: Match<Simple>[],
       serverPlayer: Player,
       index: number,
       playersToSplit: Player[]
-    ): Match[] => (isEven(index)
+    ): Match<Simple>[] => (isEven(index)
       ? addMatch(
         matches,
         serverPlayer,
@@ -92,7 +92,7 @@ describe("match", (): void => {
   it("should create a match with 2 players", (): void => {
     const player1: Player = { nom: "jeanne" };
     const player2: Player = { nom: "serge" };
-    const match: Match = createMatch(player1)(player2);
+    const match: Match<Double | Simple> = createMatch(player1)(player2);
 
     expect(match).toStrictEqual({ players: [player1, player2] });
   });
@@ -100,7 +100,7 @@ describe("match", (): void => {
   it("should create a List of tuple of Server/Receiver from playerList", (): void => {
     const player1: Player = { nom: "jeanne" };
     const player2: Player = { nom: "serge" };
-    const match: Match = createMatch(player1)(player2);
+    const match: Match<Double | Simple> = createMatch(player1)(player2);
 
     expect(match).toStrictEqual({ players: [player1, player2] });
   });
@@ -109,7 +109,7 @@ describe("match", (): void => {
     const player1: Player = { nom: "jeanne" };
     const player2: Player = { nom: "serge" };
     const listPlayer: Player[] = [player1, player2];
-    const matches: Match[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
     expect(
       matches
     ).toStrictEqual([
@@ -127,7 +127,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
-    const matches: Match[] = createPlayerMatch(listPlayer, 2);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2);
     expect(
       matches)
     .toStrictEqual([
@@ -153,7 +153,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
-    const matches: Match[] = createPlayerMatch(listPlayer, 2);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2);
 
     expect(matches).toStrictEqual([
       {
@@ -177,7 +177,7 @@ describe("match", (): void => {
 
     const listPlayer: Player[] = [player1, player2];
 
-    const matches: Match[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -196,7 +196,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const matches: Match[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -245,7 +245,7 @@ describe("match", (): void => {
 
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7, player8];
-    const matches: Match[] = createPlayerMatch(listPlayer, 2, true);
+    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2, true);
 
     expect(matches).toStrictEqual([
       {
