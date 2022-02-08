@@ -1,6 +1,8 @@
-type Player = { nom: string };
+type Level = number;
 
-type Match<T extends Double | Simple> = {
+type Player = { nom: string; level: Level };
+
+type Match<T extends Double | Simple = Double | Simple> = {
   players: T;
 };
 
@@ -78,17 +80,21 @@ const createPlayerMatch = (
   preferDouble: boolean = false
 ): Match[] => (preferDouble ? createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
 
+const sortByHighestLevel = (listPlayer: Player[]): Player[] => listPlayer.sort((player1: Player, player2: Player): number => player2.level - player1.level);
+
 const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
-  if (isEven(listPlayer.length)) {
+  const listPlayerSorted: Player[] = sortByHighestLevel(listPlayer);
+
+  if (isEven(listPlayerSorted.length)) {
     return {
-      playersInGame: listPlayer,
+      playersInGame: listPlayerSorted,
       standbyPlayers: []
     };
   }
 
   return {
-    playersInGame: [...listPlayer].splice(0, listPlayer.length - 1),
-    standbyPlayers: [listPlayer[listPlayer.length - 1]]
+    playersInGame: [...listPlayerSorted].splice(0, listPlayerSorted.length - 1),
+    standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]]
   };
 }
 
@@ -110,8 +116,8 @@ describe("match", (): void => {
   });
 
   it("should create a List of tuple of Server_Receiver from playerList", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
     const listPlayer: Player[] = [player1, player2];
     const matches: Match[] = createPlayerMatch(listPlayer, 1);
     expect(
@@ -125,10 +131,10 @@ describe("match", (): void => {
   });
 
   it("should create a List of tuple of Server/Receiver from playerList with 4 players", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeannette" };
-    const player4: Player = { nom: "sergei" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const matches: Match[] = createPlayerMatch(listPlayer, 2);
@@ -151,10 +157,10 @@ describe("match", (): void => {
   });
 
   it("should affect distinct fields to  players without fields", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeannette" };
-    const player4: Player = { nom: "sergei" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const matches: Match[] = createPlayerMatch(listPlayer, 2);
@@ -176,8 +182,8 @@ describe("match", (): void => {
   });
 
   it("should affect distinct fields to  players without fields when less players than fields", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
 
     const listPlayer: Player[] = [player1, player2];
 
@@ -194,10 +200,10 @@ describe("match", (): void => {
   });
 
   it("should affect distinct fields to players without fields when less fields than players", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeannette" };
-    const player4: Player = { nom: "sergei" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
     const matches: Match[] = createPlayerMatch(listPlayer, 1);
@@ -213,9 +219,9 @@ describe("match", (): void => {
   });
 
   it(`should split listplayer in to playeringame and standyplayer with 3 players`, (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeanpaul" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeanpaul" };
     const listPlayer: Player[] = [player1, player2, player3];
 
     const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
@@ -225,10 +231,10 @@ describe("match", (): void => {
   });
 
   it(`should get 1 field with 4 players without standbyplayer`, (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeanpaul" };
-    const player4: Player = { nom: "alice" };
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeanpaul" };
+    const player4: Player = { level: 0, nom: "alice" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
     const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
@@ -376,8 +382,5 @@ describe("match", (): void => {
   /*
    *
    * TODO mettre le niveau
-   * TODO contraindre les types
-   *  [Player, Player][] => liste de joueurs pour des simples
-   *  [Player, Player, Player, Player][] => liste de joueurs pour des doubles
    */
 });
