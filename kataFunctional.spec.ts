@@ -76,7 +76,7 @@ const createPlayerMatch = (
   listPlayer: Player[],
   availableFieldsCount: number,
   preferDouble: boolean = false
-): Match<Double | Simple>[] => (preferDouble ? createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
+): Match[] => (preferDouble ? createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
 
 const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
   if (isEven(listPlayer.length)) {
@@ -94,17 +94,17 @@ const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPla
 
 describe("match", (): void => {
   it("should create a match with 2 players", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const match: Match<Double | Simple> = createMatch(player1)(player2);
+    const player1: Player = { level:0, nom: "jeanne" };
+    const player2: Player = { level:0, nom: "serge" };
+    const match: Match = createMatch(player1)(player2);
 
     expect(match).toStrictEqual({ players: [player1, player2] });
   });
 
   it("should create a List of tuple of Server/Receiver from playerList", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const match: Match<Double | Simple> = createMatch(player1)(player2);
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const match: Match = createMatch(player1)(player2);
 
     expect(match).toStrictEqual({ players: [player1, player2] });
   });
@@ -113,7 +113,7 @@ describe("match", (): void => {
     const player1: Player = { nom: "jeanne" };
     const player2: Player = { nom: "serge" };
     const listPlayer: Player[] = [player1, player2];
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
     expect(
       matches
     ).toStrictEqual([
@@ -131,7 +131,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2);
+    const matches: Match[] = createPlayerMatch(listPlayer, 2);
     expect(
       matches)
     .toStrictEqual([
@@ -157,7 +157,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2);
+    const matches: Match[] = createPlayerMatch(listPlayer, 2);
 
     expect(matches).toStrictEqual([
       {
@@ -181,7 +181,7 @@ describe("match", (): void => {
 
     const listPlayer: Player[] = [player1, player2];
 
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -200,7 +200,7 @@ describe("match", (): void => {
     const player4: Player = { nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 1);
+    const matches: Match[] = createPlayerMatch(listPlayer, 1);
 
     expect(matches).toStrictEqual([
       {
@@ -238,18 +238,17 @@ describe("match", (): void => {
   });
 
   it("should affect 2 fields for 4 players", (): void => {
-    const player1: Player = { nom: "jeanne" };
-    const player2: Player = { nom: "serge" };
-    const player3: Player = { nom: "jeannette" };
-    const player4: Player = { nom: "sergei" };
-    const player5: Player = { nom: "henri" };
-    const player6: Player = { nom: "alfred" };
-    const player7: Player = { nom: "jeannette gtr" };
-    const player8: Player = { nom: "marie" };
-
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
+    const player5: Player = { level: 0, nom: "henri" };
+    const player6: Player = { level: 0, nom: "alfred" };
+    const player7: Player = { level: 0, nom: "jeannette gtr" };
+    const player8: Player = { level: 0, nom: "marie" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7, player8];
-    const matches: Match<Double | Simple>[] = createPlayerMatch(listPlayer, 2, true);
+    const matches: Match[] = createPlayerMatch(listPlayer, 2, true);
 
     expect(matches).toStrictEqual([
       {
@@ -271,16 +270,111 @@ describe("match", (): void => {
     ]);
   });
 
-  /*
-   * TODO move selectPlayersForSimpleMatches (same for doubles) in pollPlayer to get standbyPlayers, createPlayerMatch should not be called directly
-   * First I create my pool, I get the playable payers (with specific types) and the standby, now I can call a function that create matches and only accept
-   * TODO 1 field 4 players 4 players  play
-   * TODO 2 field 5 players soit 4 players play on field1 and 1 standby or 2 on field 1 and 2 on field 2 and 1 standby
-   * TODO another player on standby
-   */
+  it("should affect 2 fields for 7 players", (): void => {
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
+    const player5: Player = { level: 0, nom: "henri" };
+    const player6: Player = { level: 0, nom: "alfred" };
+    const player7: Player = { level: 0, nom: "jeannette gtr" };
 
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 2, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player2,
+          player3,
+          player4
+        ]
+      },
+      {
+        players: [
+          player5,
+          player6
+        ]
+      },
+    ]);
+  });
+
+  it("should affect 3 fields for 7 players", (): void => {
+    const player1: Player = { level: 0, nom: "jeanne" };
+    const player2: Player = { level: 0, nom: "serge" };
+    const player3: Player = { level: 0, nom: "jeannette" };
+    const player4: Player = { level: 0, nom: "sergei" };
+    const player5: Player = { level: 0, nom: "henri" };
+    const player6: Player = { level: 0, nom: "alfred" };
+    const player7: Player = { level: 0, nom: "jeannette gtr" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 3, false);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player2,
+        ]
+      },
+      {
+        players: [
+          player3,
+          player4
+        ]
+      },
+      {
+        players: [
+          player5,
+          player6
+        ]
+      },
+    ]);
+  });
+
+  it("should affect 1 fields for 3 players with 2 players with the closest level", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 3, nom: "serge" };
+    const player3: Player = { level: 9002, nom: "jeannette"  };
+
+
+    const listPlayer: Player[] = [player1, player2, player3];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, false);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player3,
+          player1,
+        ]
+      }
+    ]);
+  });
+
+  it("should affect 1 fields for 4 players with the summed level of each team as close as possible", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 3, nom: "serge" };
+    const player3: Player = { level: 9002, nom: "jeannette"  };
+    const player4: Player = { level: 5, nom: "sergei" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player4,
+          player2,
+          player3
+        ]
+      }
+    ]);
+  });
   /*
-   * TODO voir aux nombre limite de terrain on peut ajouter les terrains au fur et a mesure peu d'interet
+   *
    * TODO mettre le niveau
    * TODO contraindre les types
    *  [Player, Player][] => liste de joueurs pour des simples
