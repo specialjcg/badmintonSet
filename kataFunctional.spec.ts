@@ -14,9 +14,9 @@ type MatchWithOnlyServerPlayer = (player2: Player) => Match<Simple>;
 
 const createMatch: (player1: Player) => MatchWithOnlyServerPlayer =
   (player1: Player): MatchWithOnlyServerPlayer =>
-  (player2: Player): Match<Simple> =>  ({
-    players: [player1, player2]
-  });
+    (player2: Player): Match<Simple> =>  ({
+      players: [player1, player2]
+    });
 
 const isEven = (index: number): boolean => index % 2 === 0;
 
@@ -82,18 +82,32 @@ const createPlayerMatch = (
 
 const sortByHighestLevel = (listPlayer: Player[]): Player[] => listPlayer.sort((player1: Player, player2: Player): number => player2.level - player1.level);
 
+const associateByLevel = (listPlayer: Player[]) => {
+  const lowLevel = listPlayer.slice(0, listPlayer.length / 2);
+  const topLevel = listPlayer.slice(listPlayer.length / 2, listPlayer.length).reverse();
+
+  let newListPlayer: Player[] = [];
+
+  for (let i = 0; i < lowLevel.length; i++) {
+    newListPlayer.push(topLevel[i]);
+    newListPlayer.push(lowLevel[i]);
+  }
+
+  return newListPlayer;
+};
+
 const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
   const listPlayerSorted: Player[] = sortByHighestLevel(listPlayer);
 
   if (isEven(listPlayerSorted.length)) {
     return {
-      playersInGame: listPlayerSorted,
+      playersInGame: associateByLevel(listPlayerSorted),
       standbyPlayers: []
     };
   }
 
   return {
-    playersInGame: [...listPlayerSorted].splice(0, listPlayerSorted.length - 1),
+    playersInGame:  [...listPlayerSorted].slice(0, listPlayerSorted.length - 1),
     standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]]
   };
 }
@@ -140,20 +154,20 @@ describe("match", (): void => {
     const matches: Match[] = createPlayerMatch(listPlayer, 2);
     expect(
       matches)
-    .toStrictEqual([
-      {
-        players: [
-          player1,
-          player2
-        ]
-      },
-      {
-        players: [
-          player3,
-          player4
-        ]
-      },
-    ]);
+      .toStrictEqual([
+        {
+          players: [
+            player1,
+            player2
+          ]
+        },
+        {
+          players: [
+            player3,
+            player4
+          ]
+        },
+      ]);
   });
 
   it("should affect distinct fields to  players without fields", (): void => {
@@ -239,7 +253,7 @@ describe("match", (): void => {
 
     const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
 
-    expect(playersInGame).toStrictEqual([player1, player2, player3, player4]);
+    expect(playersInGame).toStrictEqual([player4, player1, player3, player2]);
     expect(standbyPlayers).toStrictEqual([]);
   });
 
@@ -371,16 +385,73 @@ describe("match", (): void => {
     expect(matches).toStrictEqual([
       {
         players: [
-          player1,
-          player4,
           player2,
-          player3
+          player3,
+          player4,
+          player1,
         ]
       }
     ]);
   });
-  /*
-   *
-   * TODO mettre le niveau
-   */
+
+  it("should affect 2 fields for 8 players with the summed level of each team as close as possible", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 42, nom: "serge" };
+    const player3: Player = { level: 902, nom: "jeannette"  };
+    const player4: Player = { level: 452, nom: "sergei" };
+    const player5: Player = { level: 9001, nom: "henri" };
+    const player6: Player = { level: 372, nom: "paul" };
+    const player7: Player = { level: 9, nom: "margaux"  };
+    const player8: Player = { level: 27, nom: "alfred" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7, player8];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 2, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player7,
+          player1,
+          player8,
+          player5,
+        ]
+      },
+      {
+        players: [
+          player2,
+          player3,
+          player6,
+          player4
+        ]
+      }
+    ]);
+  });
+
+  it("should affect 1 fields for 5 players with the summed level of each team as close as possible", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 9002, nom: "jeannette"  };
+    const player3: Player = { level: 9000, nom: "henri"  };
+    const player4: Player = { level: 6, nom: "sergei" };
+    const player5: Player = { level: 7, nom: "alfred" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5];
+    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player4,
+          player3,
+          player5,
+        ]
+      }
+    ]);
+  });
 });
+
+// TODO ExpectMatchesToEqual
+//  const expected = ['Alice', 'Bob'];
+//   it('matches even if received contains additional elements', () => {
+//     expect(['Alice', 'Bob', 'Eve']).toEqual(expect.arrayContaining(expected));
+//   });
