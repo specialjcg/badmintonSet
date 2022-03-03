@@ -12,6 +12,11 @@ type Double = [Player, Player, Player, Player];
 
 type MatchWithOnlyServerPlayer = (player2: Player) => Match<Simple>;
 
+type PlayerPools = {
+  playersInGame: Player[];
+  standbyPlayers: Player[];
+}
+
 const createMatch: (player1: Player) => MatchWithOnlyServerPlayer =
   (player1: Player): MatchWithOnlyServerPlayer =>
     (player2: Player): Match<Simple> =>  ({
@@ -78,15 +83,24 @@ const createPlayerMatch = (
   listPlayer: Player[],
   availableFieldsCount: number,
   preferDouble: boolean = false
-): Match[] => (preferDouble ? createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) : createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount)))
+): Match[] => (
+  preferDouble ?
+    createPlayerDoubleMatch(selectPlayersForDoubleMatches(listPlayer, availableFieldsCount)) :
+    createPlayerSimpleMatch(selectPlayersForSimpleMatches(listPlayer, availableFieldsCount))
+)
 
-const sortByHighestLevel = (listPlayer: Player[]): Player[] => listPlayer.sort((player1: Player, player2: Player): number => player2.level - player1.level);
 
-const associateByLevel = (listPlayer: Player[]) => {
-  const lowLevel = listPlayer.slice(0, listPlayer.length / 2);
-  const topLevel = listPlayer.slice(listPlayer.length / 2, listPlayer.length).reverse();
+const sortByHighestLevel = (listPlayer: Player[]): Player[] =>
+  listPlayer.sort((player1: Player, player2: Player): number => player2.level - player1.level);
 
-  let newListPlayer: Player[] = [];
+const sortByLowestLevel= (listPlayer: Player[]): Player[] =>
+  listPlayer.sort((player1: Player, player2: Player): number => player1.level - player2.level);
+
+const associateByLevel = (listPlayer: Player[]): Player[] => {
+  const lowLevel: Player[] = listPlayer.slice(0, listPlayer.length / 2);
+  const topLevel: Player[] = listPlayer.slice(listPlayer.length / 2, listPlayer.length).reverse();
+
+  const newListPlayer: Player[] = [];
 
   for (let i = 0; i < lowLevel.length; i++) {
     newListPlayer.push(topLevel[i]);
