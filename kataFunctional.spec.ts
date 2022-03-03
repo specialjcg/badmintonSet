@@ -96,21 +96,20 @@ const associateByLevel = (listPlayer: Player[]) => {
   return newListPlayer;
 };
 
-const pollPlayer = (listPlayer: Player[]): { playersInGame: Player[]; standbyPlayers: Player[] } => {
-  const listPlayerSorted: Player[] = sortByHighestLevel(listPlayer);
-
-  if (isEven(listPlayerSorted.length)) {
-    return {
-      playersInGame: associateByLevel(listPlayerSorted),
-      standbyPlayers: []
-    };
-  }
-
-  return {
-    playersInGame:  [...listPlayerSorted].slice(0, listPlayerSorted.length - 1),
+const removeLastPlayer = (listPlayerSorted: Player[]): PlayerPools =>
+  (isEven(listPlayerSorted.length) ? ({
+    playersInGame: associateByLevel(listPlayerSorted),
+    standbyPlayers: []
+  }) : ({
+    playersInGame: associateByLevel([...listPlayerSorted].slice(0, listPlayerSorted.length - 1)),
     standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]]
-  };
-}
+  }));
+
+const removeWeakestPlayerStrategy = (listPlayer: Player[]): PlayerPools =>
+  removeLastPlayer(sortByHighestLevel(listPlayer));
+
+const removeStrongestPlayerStrategy= (listPlayer: Player[]): PlayerPools =>
+  removeLastPlayer(sortByLowestLevel(listPlayer));
 
 describe("match", (): void => {
   it("should create a match with 2 players", (): void => {
@@ -238,9 +237,9 @@ describe("match", (): void => {
     const player3: Player = { level: 0, nom: "jeanpaul" };
     const listPlayer: Player[] = [player1, player2, player3];
 
-    const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
+    const { playersInGame, standbyPlayers }: PlayerPools = removeWeakestPlayerStrategy(listPlayer);
 
-    expect(playersInGame).toStrictEqual([player1, player2]);
+    expect(playersInGame).toStrictEqual([player2, player1]);
     expect(standbyPlayers).toStrictEqual([player3]);
   });
 
@@ -251,7 +250,7 @@ describe("match", (): void => {
     const player4: Player = { level: 0, nom: "alice" };
     const listPlayer: Player[] = [player1, player2, player3, player4];
 
-    const { playersInGame, standbyPlayers }: { playersInGame: Player[]; standbyPlayers: Player[] } = pollPlayer(listPlayer);
+    const { playersInGame, standbyPlayers }: PlayerPools = removeWeakestPlayerStrategy(listPlayer);
 
     expect(playersInGame).toStrictEqual([player4, player1, player3, player2]);
     expect(standbyPlayers).toStrictEqual([]);
@@ -300,21 +299,21 @@ describe("match", (): void => {
     const player7: Player = { level: 0, nom: "jeannette gtr" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 2, true);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 2, true);
 
     expect(matches).toStrictEqual([
       {
         players: [
+          player6,
           player1,
-          player2,
-          player3,
-          player4
+          player5,
+          player2
         ]
       },
       {
         players: [
-          player5,
-          player6
+          player4,
+          player3
         ]
       },
     ]);
@@ -330,25 +329,25 @@ describe("match", (): void => {
     const player7: Player = { level: 0, nom: "jeannette gtr" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 3, false);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 3, false);
 
     expect(matches).toStrictEqual([
       {
         players: [
+          player6,
           player1,
-          player2,
-        ]
-      },
-      {
-        players: [
-          player3,
-          player4
         ]
       },
       {
         players: [
           player5,
-          player6
+          player2
+        ]
+      },
+      {
+        players: [
+          player4,
+          player3
         ]
       },
     ]);
@@ -361,13 +360,13 @@ describe("match", (): void => {
 
 
     const listPlayer: Player[] = [player1, player2, player3];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, false);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 1, false);
 
     expect(matches).toStrictEqual([
       {
         players: [
-          player3,
           player1,
+          player3,
         ]
       }
     ]);
@@ -380,7 +379,7 @@ describe("match", (): void => {
     const player4: Player = { level: 5, nom: "sergei" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, true);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 1, true);
 
     expect(matches).toStrictEqual([
       {
@@ -405,7 +404,7 @@ describe("match", (): void => {
     const player8: Player = { level: 27, nom: "alfred" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5, player6, player7, player8];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 2, true);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 2, true);
 
     expect(matches).toStrictEqual([
       {
@@ -427,31 +426,33 @@ describe("match", (): void => {
     ]);
   });
 
-  it("should affect 1 fields for 5 players with the summed level of each team as close as possible", (): void => {
-    const player1: Player = { level: 9001, nom: "jeanne" };
+  it("should affect 1 fields for 5 players with the summed level of each team as close as possible with 3 weakest players", (): void => {
+    const player1: Player = { level: 1, nom: "jeanne" };
     const player2: Player = { level: 9002, nom: "jeannette"  };
     const player3: Player = { level: 9000, nom: "henri"  };
     const player4: Player = { level: 6, nom: "sergei" };
     const player5: Player = { level: 7, nom: "alfred" };
 
     const listPlayer: Player[] = [player1, player2, player3, player4, player5];
-    const matches: Match[] = createPlayerMatch(pollPlayer(listPlayer).playersInGame, 1, true);
+    const matches: Match[] = createPlayerMatch(removeWeakestPlayerStrategy(listPlayer).playersInGame, 1, true);
 
     expect(matches).toStrictEqual([
       {
         players: [
-          player1,
           player4,
-          player3,
+          player2,
           player5,
+          player3,
         ]
       }
     ]);
   });
 });
 
-// TODO ExpectMatchesToEqual
-//  const expected = ['Alice', 'Bob'];
-//   it('matches even if received contains additional elements', () => {
-//     expect(['Alice', 'Bob', 'Eve']).toEqual(expect.arrayContaining(expected));
-//   });
+/*
+ * TODO ExpectMatchesToEqual
+ *  const expected = ['Alice', 'Bob'];
+ *   it('matches even if received contains additional elements', () => {
+ *     expect(['Alice', 'Bob', 'Eve']).toEqual(expect.arrayContaining(expected));
+ *   });
+ */
