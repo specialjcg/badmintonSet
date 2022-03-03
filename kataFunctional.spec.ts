@@ -461,6 +461,54 @@ describe("match", (): void => {
       }
     ]);
   });
+
+  it("should affect 1 fields for 5 players with the summed level of each team as close as possible with 3 strongest players", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 9002, nom: "jeannette"  };
+    const player3: Player = { level: 9000, nom: "henri"  };
+    const player4: Player = { level: 6, nom: "sergei" };
+    const player5: Player = { level: 7, nom: "alfred" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5];
+    const matches: Match[] = createPlayerMatch(removeStrongestPlayerStrategy(listPlayer).playersInGame, 1, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player1,
+          player4,
+          player3,
+          player5,
+        ]
+      }
+    ]);
+  });
+
+  it("should affect 1 fields for 5 players for second turn", (): void => {
+    const player1: Player = { level: 9001, nom: "jeanne" };
+    const player2: Player = { level: 9002, nom: "jeannette"  };
+    const player3: Player = { level: 9000, nom: "henri"  };
+    const player4: Player = { level: 6, nom: "sergei" };
+    const player5: Player = { level: 7, nom: "alfred" };
+
+    const listPlayer: Player[] = [player1, player2, player3, player4, player5];
+
+    const { history }: PlayerPools = removeStrongestPlayerStrategy(EMPTY_HISTORY)(listPlayer);
+
+    const matches: Match[] = createPlayerMatch(removeStrongestPlayerStrategy(history)(listPlayer).playersInGame, 1, true);
+
+    expect(matches).toStrictEqual([
+      {
+        players: [
+          player2,
+          player4,
+          player3,
+          player5,
+        ]
+      }
+    ]);
+  });
+
 });
 
 /*
