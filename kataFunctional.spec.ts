@@ -121,7 +121,8 @@ const associateByLevel = (listPlayer: Player[]): Player[] => {
 const removeLastPlayer = (listPlayerSorted: Player[]): PlayerPoolsWithHistory =>
   (isEven(listPlayerSorted.length) ? ({
     playersInGame: associateByLevel(listPlayerSorted),
-    standbyPlayers: []
+    standbyPlayers: [],
+    history: []
   }) : ({
     playersInGame: associateByLevel([...listPlayerSorted].slice(0, listPlayerSorted.length - 1)),
     standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]],
