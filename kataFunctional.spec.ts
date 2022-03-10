@@ -16,6 +16,14 @@ type PlayerPools = {
   playersInGame: Player[];
   standbyPlayers: Player[];
 }
+type MatchesWithStandByPlayers={
+  matches:Match[];
+  standbyPlayers: Player[];
+}
+
+type PlayerPoolsWithHistory = PlayerPools & { history: MatchesWithStandByPlayers[] };
+
+const EMPTY_HISTORY: [] = [];
 
 const createMatch: (player1: Player) => MatchWithOnlyServerPlayer =
   (player1: Player): MatchWithOnlyServerPlayer =>
@@ -110,19 +118,20 @@ const associateByLevel = (listPlayer: Player[]): Player[] => {
   return newListPlayer;
 };
 
-const removeLastPlayer = (listPlayerSorted: Player[]): PlayerPools =>
+const removeLastPlayer = (listPlayerSorted: Player[]): PlayerPoolsWithHistory =>
   (isEven(listPlayerSorted.length) ? ({
     playersInGame: associateByLevel(listPlayerSorted),
     standbyPlayers: []
   }) : ({
     playersInGame: associateByLevel([...listPlayerSorted].slice(0, listPlayerSorted.length - 1)),
-    standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]]
+    standbyPlayers: [listPlayerSorted[listPlayerSorted.length - 1]],
+    history: []
   }));
 
 const removeWeakestPlayerStrategy = (listPlayer: Player[]): PlayerPools =>
   removeLastPlayer(sortByHighestLevel(listPlayer));
 
-const removeStrongestPlayerStrategy= (listPlayer: Player[]): PlayerPools =>
+const removeStrongestPlayerStrategy = (listPlayer: Player[], history: MatchesWithStandByPlayers[] = EMPTY_HISTORY): PlayerPoolsWithHistory =>
   removeLastPlayer(sortByLowestLevel(listPlayer));
 
 describe("match", (): void => {
