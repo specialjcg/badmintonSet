@@ -100,6 +100,7 @@ const addMatches = (players: Player[]): MatchResult[] => {
             {
                 [players[i].nom]: MatchScore.NotPlayed,
                 [players[i + 1].nom]: MatchScore.NotPlayed,
+
             }
         ];
     }
