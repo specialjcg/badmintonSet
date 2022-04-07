@@ -494,39 +494,39 @@ describe("match", (): void => {
     ]);
   });
 
-  it("should affect 1 fields for 5 players for second turn", (): void => {
-    const player1: Player = { level: 9001, nom: "jeanne" };
-    const player2: Player = { level: 9002, nom: "jeannette"  };
-    const player3: Player = { level: 9000, nom: "henri"  };
-    const player4: Player = { level: 6, nom: "sergei" };
-    const player5: Player = { level: 7, nom: "alfred" };
-
-    const listPlayer: Player[] = [player1, player2, player3, player4, player5];
-
-    const { history } : PlayerPoolsWithHistory = removeStrongestPlayerStrategy(listPlayer);
-
-    const matches: Match[] = createPlayerMatch(removeStrongestPlayerStrategy(listPlayer, history).playersInGame, 1, true);
-
-    expect(history).toStrictEqual([
-      {
-        standbyPlayers: [
-          player2 // todo : replace with player1 when green
-        ]
-      }
-    ]);
-
-    // expect(matches).toStrictEqual([
-    //   {
-    //     players: [
-    //       player2,
-    //       player4,
-    //       player3,
-    //       player5,
-    //     ]
-    //   }
-    // ]);
-  });
-
+//   // it("should affect 1 fields for 5 players for second turn", (): void => {
+//   //   const player1: Player = { level: 9001, nom: "jeanne" };
+//   //   const player2: Player = { level: 9002, nom: "jeannette"  };
+//   //   const player3: Player = { level: 9000, nom: "henri"  };
+//   //   const player4: Player = { level: 6, nom: "sergei" };
+//   //   const player5: Player = { level: 7, nom: "alfred" };
+//   //
+//   //   const listPlayer: Player[] = [player1, player2, player3, player4, player5];
+//   //
+//   //   const { history } : PlayerPoolsWithHistory = removeStrongestPlayerStrategy(listPlayer);
+//   //
+//   //   const matches: Match[] = createPlayerMatch(removeStrongestPlayerStrategy(listPlayer, history).playersInGame, 1, true);
+//   //
+//   //   expect(history).toStrictEqual([
+//   //     {
+//   //       standbyPlayers: [
+//   //         player2 // todo : replace with player1 when green
+//   //       ]
+//   //     }
+//   //   ]);
+//
+//     // expect(matches).toStrictEqual([
+//     //   {
+//     //     players: [
+//     //       player2,
+//     //       player4,
+//     //       player3,
+//     //       player5,
+//     //     ]
+//     //   }
+//     // ]);
+//   });
+//
 });
 
 /*
