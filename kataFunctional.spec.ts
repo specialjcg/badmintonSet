@@ -88,11 +88,35 @@ const makeSession = (players: Player[]): Session => ({players, tours: []});
 
 const addTourToSession = (session: Session): Session => ({
     players: session.players,
-    tours: addMatches(session.players)
+    tours: [...session.tours, ...addMatches(session)]
 });
 
-const addMatches = (players: Player[]): MatchResult[] => {
+type PlayerCountEncounter = {
+    nom: string,
+    encounterCount: number
+};
+
+const addMatches = ({players, tours}: {players: Player[], tours: MatchResult[]}): MatchResult[] => {
     let matchResults: MatchResult[] = [];
+
+    const player: Player = players[0];
+    const othersPlayers: Player[] = players.slice(1, players.length-1);
+
+    const toursForPlayer: MatchResult[] = tours.filter((tour: MatchResult) => {
+        return tour[player.nom] == null;
+    });
+//ToDO compter les rencontre entre joueur et associer le joueur  avec celui le moins rencontrer
+    const opponentsNames: string[] = toursForPlayer.map((tour: MatchResult): string | undefined => {
+        return Object.keys(tour).find((name: string) => name !== player.nom);
+
+    }).filter((name: string): name is string => name != null);
+    // array (T | undefined | null)[] => const definedArray: T[] = array.filter((element: T): element is T => element != null))
+
+    const playerCountEncounters: PlayerCountEncounter[] = opponentsNames.reduce((acc: PlayerCountEncounter[], tour: string) => {
+
+        return acc;
+    }, []);
+
 
     for (let i = 0; i < players.length; i += 2) {
         matchResults = [
@@ -100,13 +124,23 @@ const addMatches = (players: Player[]): MatchResult[] => {
             {
                 [players[i].nom]: MatchScore.NotPlayed,
                 [players[i + 1].nom]: MatchScore.NotPlayed,
-
             }
         ];
     }
 
     return matchResults;
 };
+
+// const EMPTY_SESSION = {
+//     players: [],
+//     tours: []
+// };
+//
+// const pipe = (...tours: ((session: Session) => Session)[]): Session => {
+//     return tours.reduce((session: Session, tour: (session: Session) => Session) => {
+//         return tour(session);
+//     }, EMPTY_SESSION);
+// }
 
 describe("construction d'une session d'entrainement", (): void => {
     it("should create a player", (): void => {
@@ -198,10 +232,9 @@ describe("construction d'une session d'entrainement", (): void => {
         const player3 = makePlayer(0, "jeannette");
         const player4 = makePlayer(0, "sergei");
 
-
         const emptySession: Session = makeSession([player1, player2, player3, player4]);
 
-        const session: Session = addTourToSession(emptySession);
+        const session: Session = addTourToSession(addTourToSession(emptySession));
 
         expect(session).toEqual(
             {
