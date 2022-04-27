@@ -112,6 +112,36 @@ const addMatches = ({players, tours}: {players: Player[], tours: MatchResult[]})
 
     return matchResults;
   }
+//todo attention not same player in same session
+//     "tours": [
+//         {
+//             "jeanne": 0,
+//             "serge": 0
+//         },
+//         {
+//             "jeannette": 0,
+//             "sergei": 0
+//         },
+    //round 1
+//         {
+//             "jeanne": 0,
+//             "jeannette": 0
+//         },
+//         {
+//             "jeannette": 0,
+//             "serge": 0
+//         },
+    //round2  jeannette selected twice not possible
+//         {
+//             "jeanne": 0,
+//             "jeannette": 0
+//         },
+//         {
+//             "jeanne": 0,
+//             "sergei": 0
+//         }
+
+
 
   for (let player of players) {
     const toursForPlayer: MatchResult[] = tours.filter((tour: MatchResult) => {
