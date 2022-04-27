@@ -97,50 +97,51 @@ type PlayerCountEncounter = {
 };
 
 const addMatches = ({players, tours}: {players: Player[], tours: MatchResult[]}): MatchResult[] => {
-    let matchResults: MatchResult[] = [];
+  let matchResults: MatchResult[] = [];
 
-    const player: Player = players[0];
-    const othersPlayers: Player[] = players.slice(1, players.length-1);
-
-    const toursForPlayer: MatchResult[] = tours.filter((tour: MatchResult) => {
-        return tour[player.nom] == null;
-    });
-//ToDO compter les rencontre entre joueur et associer le joueur  avec celui le moins rencontrer
-    const opponentsNames: string[] = toursForPlayer.map((tour: MatchResult): string | undefined => {
-        return Object.keys(tour).find((name: string) => name !== player.nom);
-
-    }).filter((name: string): name is string => name != null);
-    // array (T | undefined | null)[] => const definedArray: T[] = array.filter((element: T): element is T => element != null))
-
-    const playerCountEncounters: PlayerCountEncounter[] = opponentsNames.reduce((acc: PlayerCountEncounter[], tour: string) => {
-
-        return acc;
-    }, []);
-
-
+  if (tours.length === 0) {
     for (let i = 0; i < players.length; i += 2) {
-        matchResults = [
-            ...matchResults,
-            {
-                [players[i].nom]: MatchScore.NotPlayed,
-                [players[i + 1].nom]: MatchScore.NotPlayed,
-            }
-        ];
+      matchResults = [
+        ...matchResults,
+        {
+          [players[i].nom]: MatchScore.NotPlayed,
+          [players[i + 1].nom]: MatchScore.NotPlayed,
+        }
+      ];
     }
 
     return matchResults;
-};
+  }
 
-// const EMPTY_SESSION = {
-//     players: [],
-//     tours: []
-// };
-//
-// const pipe = (...tours: ((session: Session) => Session)[]): Session => {
-//     return tours.reduce((session: Session, tour: (session: Session) => Session) => {
-//         return tour(session);
-//     }, EMPTY_SESSION);
-// }
+  for (let player of players) {
+    const toursForPlayer: MatchResult[] = tours.filter((tour: MatchResult) => {
+        return tour[player.nom] == null;
+    });
+
+    const opponentsNames: string[] = toursForPlayer.map((tour: MatchResult): string | undefined => {
+        return Object.keys(tour).find((name: string) => name !== player.nom);
+    }).filter((name: string | undefined): name is string => name != null);
+
+    const playerCountEncounters: Map<string, number> = opponentsNames.reduce((acc: Map<string, number>, opponentsName: string) => {
+      return new Map<string, number>(acc.set(opponentsName, (acc.get(opponentsName) ?? 0) + 1));
+    }, new Map<string, number>());
+
+    const sortedPlayerCountEncounters: [string, number][] = Array.from(playerCountEncounters).sort((encounterPlayer1: [string, number], encounterPlayer2: [string, number]) => {
+      return encounterPlayer1[1] - encounterPlayer2[1];
+    })
+
+    const opponent: string = sortedPlayerCountEncounters[0][0];
+
+    matchResults.push(
+      {
+        [player.nom]: MatchScore.NotPlayed,
+        [opponent]: MatchScore.NotPlayed
+      }
+    );
+  }
+
+  return matchResults;
+};
 
 describe("construction d'une session d'entrainement", (): void => {
     it("should create a player", (): void => {
