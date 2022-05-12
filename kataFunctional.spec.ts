@@ -1,71 +1,6 @@
 type Level = number;
 
 type Player = { nom: string; level: Level };
-
-type Match<T extends Double | Simple = Double | Simple> = {
-    players: T;
-};
-
-type Simple = [Player, Player];
-
-type Double = [Player, Player, Player, Player];
-
-type MatchWithOnlyServerPlayer = (player2: Player) => Match<Simple>;
-
-type PlayerPools = {
-    playersInGame: Player[];
-    standbyPlayers: Player[];
-}
-type MatchesWithStandByPlayers = {
-    matches: Match[];
-    standbyPlayers: Player[];
-}
-
-type PlayerPoolsWithHistory = PlayerPools & { history: MatchesWithStandByPlayers[] };
-
-/* describe("réflexions de Romain", (): void => {
-   it("devrait représenter un historique", (): void => {
-   const event: [] = [
-     {
-       session:
-       allPlayers: [
-         { nom: "jeanne"},
-         { nom: "serge"},
-         { nom: "jeannette" },
-         { nom: "sergei" },
-         { nom: "jeanneyeyeyeye" },
-         { nom: "sergetititit" }
-       ],
-       matches: [
-        {
-         "jeanne": 3,
-         "serge": 0
-        },
-        {
-         "jeannette": 2,
-         "sergei": 1
-        }
-       ]
-     } as Event,
-     {
-       allPlayers: [
-         {level: 0, nom: "jeanne"},
-         {level: 0, nom: "serge"},
-         { level:0, nom: "jeannette" },
-         { level:0, nom: "sergei" },
-         { level:0, nom: "jeanneyeyeyeye" },
-         { level:0, nom: "sergetititit" }
-       ],
-       allMissing: [ {level: 0, nom: "jeanne"}, {level: 0, nom: "serge"},]
-       match: [
-         "jeannette": 2,
-         "sergei": 1
-       ],
-     } as Event,
-   ];
-  });
- });*/
-
 enum MatchScore {
     NotPlayed = 0,
     Lose = 1,
@@ -90,12 +25,6 @@ const addTourToSession = (session: Session): Session => ({
     players: session.players,
     tours: [...session.tours, ...addMatches(session)]
 });
-
-type PlayerCountEncounter = {
-    nom: string,
-    encounterCount: number
-};
-
 const groupSuccessivePlayersByTwo = (players: Player[]) => {
     let matchResults: MatchResult[] = [];
 
