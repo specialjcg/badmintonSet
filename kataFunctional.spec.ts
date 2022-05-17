@@ -25,7 +25,7 @@ const addTourToSession = (session: Session): Session => ({
     players: session.players,
     tours: [...session.tours, ...addMatches(session)]
 });
-const groupSuccessivePlayersByTwo = (players: Player[]) => {
+const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
 
     if (tours.length === 0 || players.length < 3) {
@@ -45,7 +45,7 @@ const groupSuccessivePlayersByTwo = (players: Player[]) => {
 };
 
 const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult[] => {
-    return groupSuccessivePlayersByTwo(players);
+    return groupSuccessivePlayersByTwo(players, tours);
 };
 
 describe("construction d'une session d'entrainement", (): void => {
