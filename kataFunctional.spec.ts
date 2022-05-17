@@ -25,21 +25,41 @@ const addTourToSession = (session: Session): Session => ({
     players: session.players,
     tours: [...session.tours, ...addMatches(session)]
 });
+
+const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
+
+const toPlayerName = (player:Player) => player.nom;
+
+const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => Object.keys(tour));
+
+const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => {
+    const matchPerPlayerIndex = matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName);
+
+    if (matchPerPlayerIndex !== -1) {
+        matchesPerPlayer[matchPerPlayerIndex].count += 1;
+    } else {
+        matchesPerPlayer.push({
+            nom: playerName,
+            count: 0
+        });
+    }
+
+    return matchesPerPlayer;
+};
+
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
 
-    if (tours.length === 0 || players.length < 3) {
-        matchResults.push({
-            [players[0].nom]: MatchScore.NotPlayed,
-            [players[0 + 1].nom]: MatchScore.NotPlayed
-        });
-    }
-    else {
-        matchResults.push({
-            [players[0].nom]: MatchScore.NotPlayed,
-            [players[0 + 2].nom]: MatchScore.NotPlayed
-        });
-    }
+    const playerPriorities = players
+        .map(toPlayerName)
+        .concat(withToursPlayersNames(tours))
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+
+    matchResults.push({
+        [playerPriorities[0].nom]: MatchScore.NotPlayed,
+        [playerPriorities[1].nom]: MatchScore.NotPlayed
+    });
 
     return matchResults;
 };
