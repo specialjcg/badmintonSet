@@ -1,3 +1,5 @@
+import {getPriority} from "os";
+
 type Level = number;
 
 type Player = { nom: string; level: Level };
