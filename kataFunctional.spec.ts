@@ -28,13 +28,19 @@ const addTourToSession = (session: Session): Session => ({
 const groupSuccessivePlayersByTwo = (players: Player[]) => {
     let matchResults: MatchResult[] = [];
 
-    for (let i = 0; i < players.length; i += 2) {
+    if (tours.length === 0 || players.length < 3) {
         matchResults.push({
-            [players[i].nom]: MatchScore.NotPlayed,
-            [players[i + 1].nom]: MatchScore.NotPlayed
+            [players[0].nom]: MatchScore.NotPlayed,
+            [players[0 + 1].nom]: MatchScore.NotPlayed
         });
     }
-    
+    else {
+        matchResults.push({
+            [players[0].nom]: MatchScore.NotPlayed,
+            [players[0 + 2].nom]: MatchScore.NotPlayed
+        });
+    }
+
     return matchResults;
 };
 
@@ -237,10 +243,3 @@ describe("construction d'une session d'entrainement", (): void => {
 });
 
 
-/*
- * TODO ExpectMatchesToEqual
- *  const expected = ['Alice', 'Bob'];
- *   it('matches even if received contains additional elements', () => {
- *     expect(['Alice', 'Bob', 'Eve']).toEqual(expect.arrayContaining(expected));
- *   });
- */
