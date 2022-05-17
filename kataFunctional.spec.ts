@@ -19,6 +19,11 @@ type Session = {
     tours: MatchResult[]
 };
 
+type PlayerMatchCount = {
+    nom: string;
+    count: number;
+}
+
 const makeSession = (players: Player[]): Session => ({players, tours: []});
 
 const addTourToSession = (session: Session): Session => ({
