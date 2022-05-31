@@ -1,8 +1,7 @@
-import {getPriority} from "os";
-
 type Level = number;
 
 type Player = { nom: string; level: Level };
+
 enum MatchScore {
     NotPlayed = 0,
     Lose = 1,
@@ -12,9 +11,7 @@ enum MatchScore {
 
 const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
-type MatchResult = {
-    [playerName: string]: MatchScore
-}
+type MatchResult = [PlayerResult, PlayerResult]
 
 type Session = {
     players: Player[],
@@ -35,7 +32,7 @@ const addTourToSession = (session: Session): Session => ({
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
 
-const toPlayerName = (player:Player) => player.nom;
+const toPlayerName = (player: Player) => player.nom;
 
 const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => Object.keys(tour));
 
@@ -54,6 +51,14 @@ const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: st
     return matchesPerPlayer;
 };
 
+const isEqual = (matchToCompareTo: MatchResult, matchToAdd: MatchResult): boolean =>
+    [matchToCompareTo[0].name, matchToCompareTo[1].name].sort().toString() === [matchToAdd[0].name, matchToAdd[1].name].sort().toString();
+
+const makePlayerResult = (name: string) => ({
+    name,
+    score: MatchScore.NotPlayed
+});
+
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
 
@@ -63,11 +68,24 @@ const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) =>
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
 
-    matchResults.push({
-        [playerPriorities[0].nom]: MatchScore.NotPlayed,
-        [playerPriorities[1].nom]: MatchScore.NotPlayed
-    });
 
+    const foundExiting = tours.find((tour) => isEqual(tour, [
+        makePlayerResult(playerPriorities[0].nom),
+        makePlayerResult(playerPriorities[1].nom),
+    ]));
+
+    if (foundExiting != null && players.length !== 2) {
+        matchResults.push([
+            makePlayerResult(playerPriorities[0].nom),
+            makePlayerResult(playerPriorities[2].nom),
+        ]);
+    } else {
+        matchResults.push([
+            makePlayerResult(playerPriorities[0].nom),
+            makePlayerResult(playerPriorities[1].nom),
+        ]);
+
+    }
     return matchResults;
 };
 
@@ -174,7 +192,7 @@ describe("construction d'une session d'entrainement", (): void => {
         const player2 = makePlayer(0, "serge");
         const player3 = makePlayer(0, "jeannette");
 
-        const emptySession: Session = makeSession([player1, player2,player3]);
+        const emptySession: Session = makeSession([player1, player2, player3]);
 
         const session: Session = addTourToSession(addTourToSession(emptySession));
 
