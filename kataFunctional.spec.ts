@@ -11,6 +11,11 @@ enum MatchScore {
 
 const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
+type PlayerResult = {
+    name: string,
+    score: MatchScore
+}
+
 type MatchResult = [PlayerResult, PlayerResult]
 
 type Session = {
@@ -34,7 +39,7 @@ const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCoun
 
 const toPlayerName = (player: Player) => player.nom;
 
-const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => Object.keys(tour));
+const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].name, tour[1].name]);
 
 const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => {
     const matchPerPlayerIndex = matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName);
@@ -62,7 +67,7 @@ const makePlayerResult = (name: string) => ({
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
 
-    const playerPriorities = players
+    const playerPriorities: PlayerMatchCount[] = players
         .map(toPlayerName)
         .concat(withToursPlayersNames(tours))
         .reduce(toPlayerMatchCount, [])
@@ -130,10 +135,16 @@ describe("construction d'une session d'entrainement", (): void => {
                     {level: 0, nom: "serge"}
                 ],
                 tours: [
-                    {
-                        "jeanne": MatchScore.NotPlayed,
-                        "serge": MatchScore.NotPlayed
-                    }
+                    [
+                        {
+                            name: "jeanne",
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            name: "serge",
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
                 ]
             }
         ],
@@ -146,10 +157,16 @@ describe("construction d'une session d'entrainement", (): void => {
                     {level: 0, nom: "sergei"}
                 ],
                 tours: [
-                    {
-                        "jeannette": MatchScore.NotPlayed,
-                        "sergei": MatchScore.NotPlayed
-                    }
+                    [
+                        {
+                            name: "jeannette",
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            name: "sergei",
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
                 ]
             }
         ]
@@ -175,14 +192,26 @@ describe("construction d'une session d'entrainement", (): void => {
                 {level: 0, nom: "serge"}
             ],
             tours: [
-                {
-                    "jeanne": MatchScore.NotPlayed,
-                    "serge": MatchScore.NotPlayed
-                },
-                {
-                    "jeanne": MatchScore.NotPlayed,
-                    "serge": MatchScore.NotPlayed
-                }
+                [
+                    {
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'serge',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+                    {
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'serge',
+                        score: MatchScore.NotPlayed
+                    }
+                ]
             ]
         })
     });
@@ -203,14 +232,27 @@ describe("construction d'une session d'entrainement", (): void => {
                 {level: 0, nom: "jeannette"}
             ],
             tours: [
-                {
-                    "jeanne": MatchScore.NotPlayed,
-                    "serge": MatchScore.NotPlayed
-                },
-                {
-                    "jeannette": MatchScore.NotPlayed,
-                    "jeanne": MatchScore.NotPlayed
-                }
+                [
+                    {
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'serge',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+
+                    {
+                        name: 'jeannette',
+                        score: MatchScore.NotPlayed
+                    },{
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    }
+
+                ]
             ]
         })
     });
