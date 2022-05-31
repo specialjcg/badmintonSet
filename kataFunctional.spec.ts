@@ -256,6 +256,68 @@ describe("construction d'une session d'entrainement", (): void => {
             ]
         })
     });
+
+    it("should create a session with 4 tour for 4 players with 1 field", (): void => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session: Session = addTourToSession(addTourToSession(addTourToSession(addTourToSession(emptySession))));
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: "jeanne"},
+                {level: 0, nom: "serge"},
+                {level: 0, nom: "jeannette"},
+                {level: 0, nom: "paul"}
+            ],
+            tours: [
+                [
+                    {
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'serge',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+                    {
+                        name: 'jeannette',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'paul',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+                    {
+                        name: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'jeannette',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+                    {
+                        name: 'serge',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        name: 'paul',
+                        score: MatchScore.NotPlayed
+                    }
+                ]
+            ]
+        })
+    });
 });
 
 
