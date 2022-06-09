@@ -12,7 +12,7 @@ enum MatchScore {
 const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
 type PlayerResult = {
-    name: string,
+    nom: string,
     score: MatchScore
 }
 
