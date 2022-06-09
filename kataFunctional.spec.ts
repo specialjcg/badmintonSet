@@ -39,7 +39,7 @@ const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCoun
 
 const toPlayerName = (player: Player) => player.nom;
 
-const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].name, tour[1].name]);
+const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].nom, tour[1].nom]);
 
 const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => {
     const matchPerPlayerIndex = matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName);
@@ -57,15 +57,64 @@ const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: st
 };
 
 const isEqual = (matchToCompareTo: MatchResult, matchToAdd: MatchResult): boolean =>
-    [matchToCompareTo[0].name, matchToCompareTo[1].name].sort().toString() === [matchToAdd[0].name, matchToAdd[1].name].sort().toString();
+    [matchToCompareTo[0].nom, matchToCompareTo[1].nom].sort().toString() === [matchToAdd[0].nom, matchToAdd[1].nom].sort().toString();
 
-const makePlayerResult = (name: string) => ({
-    name,
+const makePlayerResult = (nom: string): PlayerResult => ({
+    nom: nom,
     score: MatchScore.NotPlayed
 });
 
+function countMatchesAlreadyPlayAgainstThisPlayer(tours: MatchResult[], nomJoueur: string, nom: string) {
+    return tours.filter((tour: MatchResult) => {
+        return tour[0].nom === nomJoueur && tour[1].nom === nom || tour[0].nom === nom && tour[1].nom === nomJoueur
+    }).length;
+}
+
+const findOtherPlayerThatPlayedLeastAgainst1 = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] => {
+
+    const playerThatPlayedLeastAgainstSelectedPlayer: PlayerMatchCount[] = players
+        .map(toPlayerName)
+        .filter(nomTest => nomJoueur !== nomTest)
+        .map(nom => ({
+            nom,
+            count: countMatchesAlreadyPlayAgainstThisPlayer(tours, nomJoueur, nom)
+        }))
+        .sort(byPlayerMatchCount);
+
+    return playerThatPlayedLeastAgainstSelectedPlayer;
+
+
+
+    // return {
+    //     nom: playerThatPlayedLeastAgainstSelectedPlayer[0].nom,
+    //     score:MatchScore.NotPlayed
+    // };
+}
+
+const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerResult => {
+
+   const playerThatPlayedLeastAgainstSelectedPlayer: PlayerMatchCount[] = players
+       .map(toPlayerName)
+       .filter(nom => nomJoueur !== nom)
+       .map(nom => ({
+           nom,
+           count: 0
+       }))
+       .sort(byPlayerMatchCount);
+
+    // tours.filter((tour: MatchResult) => {
+    //     return tour[0].nom === nomJoueur && tour[1].nom === nom || tour[0].nom === nom  && tour[1].nom === nomJoueur
+    // }).length
+
+    return {
+        nom: playerThatPlayedLeastAgainstSelectedPlayer[0].nom,
+        score:MatchScore.NotPlayed
+    };
+}
+
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
+
 
     const playerPriorities: PlayerMatchCount[] = players
         .map(toPlayerName)
@@ -74,23 +123,35 @@ const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) =>
         .sort(byPlayerMatchCount);
 
 
+    const playerThatPlayedLeast = playerPriorities[0].nom;
+
+    //On prend le joueur qui à le moins joué (joueur1) contre le joueur qui à le moins joué contre joueur1
+    matchResults.push([
+        makePlayerResult(playerThatPlayedLeast),
+        findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players),
+    ]);
+
+   /* // On a déja joué ce match
     const foundExiting = tours.find((tour) => isEqual(tour, [
         makePlayerResult(playerPriorities[0].nom),
         makePlayerResult(playerPriorities[1].nom),
-    ]));
+    ]));*/
 
+    /*// On a déja joué ce match et on a plus de deux joueur
     if (foundExiting != null && players.length !== 2) {
         matchResults.push([
             makePlayerResult(playerPriorities[0].nom),
             makePlayerResult(playerPriorities[2].nom),
         ]);
     } else {
+
         matchResults.push([
             makePlayerResult(playerPriorities[0].nom),
             makePlayerResult(playerPriorities[1].nom),
         ]);
 
-    }
+    }*/
+
     return matchResults;
 };
 
@@ -137,11 +198,11 @@ describe("construction d'une session d'entrainement", (): void => {
                 tours: [
                     [
                         {
-                            name: "jeanne",
+                            nom: "jeanne",
                             score: MatchScore.NotPlayed
                         },
                         {
-                            name: "serge",
+                            nom: "serge",
                             score: MatchScore.NotPlayed
                         }
                     ]
@@ -159,11 +220,11 @@ describe("construction d'une session d'entrainement", (): void => {
                 tours: [
                     [
                         {
-                            name: "jeannette",
+                            nom: "jeannette",
                             score: MatchScore.NotPlayed
                         },
                         {
-                            name: "sergei",
+                            nom: "sergei",
                             score: MatchScore.NotPlayed
                         }
                     ]
@@ -194,21 +255,21 @@ describe("construction d'une session d'entrainement", (): void => {
             tours: [
                 [
                     {
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'serge',
+                        nom: 'serge',
                         score: MatchScore.NotPlayed
                     }
                 ],
                 [
                     {
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'serge',
+                        nom: 'serge',
                         score: MatchScore.NotPlayed
                     }
                 ]
@@ -234,21 +295,21 @@ describe("construction d'une session d'entrainement", (): void => {
             tours: [
                 [
                     {
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'serge',
+                        nom: 'serge',
                         score: MatchScore.NotPlayed
                     }
                 ],
                 [
 
                     {
-                        name: 'jeannette',
+                        nom: 'jeannette',
                         score: MatchScore.NotPlayed
                     },{
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     }
 
@@ -277,47 +338,168 @@ describe("construction d'une session d'entrainement", (): void => {
             tours: [
                 [
                     {
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'serge',
+                        nom: 'serge',
                         score: MatchScore.NotPlayed
                     }
                 ],
                 [
                     {
-                        name: 'jeannette',
+                        nom: 'jeannette',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'paul',
+                        nom: 'paul',
                         score: MatchScore.NotPlayed
                     }
                 ],
                 [
                     {
-                        name: 'jeanne',
+                        nom: 'jeanne',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'jeannette',
+                        nom: 'jeannette',
                         score: MatchScore.NotPlayed
                     }
                 ],
                 [
                     {
-                        name: 'serge',
+                        nom: 'serge',
                         score: MatchScore.NotPlayed
                     },
                     {
-                        name: 'paul',
+                        nom: 'paul',
                         score: MatchScore.NotPlayed
                     }
                 ]
             ]
         })
     });
+
+    fit('should test', () => {
+        const tours: MatchResult[] = [
+            [
+                {
+                    nom: 'jeanne',
+                    score: MatchScore.NotPlayed
+                },
+                {
+                    nom: 'serge',
+                    score: MatchScore.NotPlayed
+                }
+            ],
+            [
+                {
+                    nom: 'jeanne',
+                    score: MatchScore.NotPlayed
+                },
+                {
+                    nom: 'jeannette',
+                    score: MatchScore.NotPlayed
+                }
+            ]
+        ];
+        const players: Player[] = [
+            {level: 0, nom: "jeanne"},
+            {level: 0, nom: "serge"},
+            {level: 0, nom: "jeanette"},
+            {level: 0, nom: "paul"}
+        ];
+
+
+        const result = findOtherPlayerThatPlayedLeastAgainst1('jeanne', tours, players);
+
+        expect(result).toStrictEqual([
+            {
+                "count": 0,
+                "nom": "paul"
+            },
+            {
+                "count": 1,
+                "nom": "jeanette"
+            },
+            {
+                "count": 1,
+                "nom": "serge"
+            },
+        ]);
+    });
+    // it("should create a session with 5 tour for 4 players with 1 field", (): void => {
+    //     const player1 = makePlayer(0, "jeanne");
+    //     const player2 = makePlayer(0, "serge");
+    //     const player3 = makePlayer(0, "jeannette");
+    //     const player4 = makePlayer(0, "paul");
+    //
+    //     const emptySession: Session = makeSession([player1, player2, player3, player4]);
+    //
+    //     const session: Session = addTourToSession(addTourToSession(addTourToSession(addTourToSession(addTourToSession(emptySession)))));
+    //
+    //     expect(session).toEqual({
+    //         players: [
+    //             {level: 0, nom: "jeanne"},
+    //             {level: 0, nom: "serge"},
+    //             {level: 0, nom: "jeannette"},
+    //             {level: 0, nom: "paul"}
+    //         ],
+    //         tours: [
+    //             [
+    //                 {
+    //                     nom: 'jeanne',
+    //                     score: MatchScore.NotPlayed
+    //                 },
+    //                 {
+    //                     nom: 'serge',
+    //                     score: MatchScore.NotPlayed
+    //                 }
+    //             ],
+    //             [
+    //                 {
+    //                     nom: 'jeannette',
+    //                     score: MatchScore.NotPlayed
+    //                 },
+    //                 {
+    //                     nom: 'paul',
+    //                     score: MatchScore.NotPlayed
+    //                 }
+    //             ],
+    //             [
+    //                 {
+    //                     nom: 'jeanne',
+    //                     score: MatchScore.NotPlayed
+    //                 },
+    //                 {
+    //                     nom: 'jeannette',
+    //                     score: MatchScore.NotPlayed
+    //                 }
+    //             ],
+    //             [
+    //                 {
+    //                     nom: 'serge',
+    //                     score: MatchScore.NotPlayed
+    //                 },
+    //                 {
+    //                     nom: 'paul',
+    //                     score: MatchScore.NotPlayed
+    //                 }
+    //             ],
+    //
+    //             [
+    //                 {
+    //                     nom: 'jeanne',
+    //                     score: MatchScore.NotPlayed
+    //                 },
+    //                 {
+    //                     nom: 'paul',
+    //                     score: MatchScore.NotPlayed
+    //                 }
+    //             ]
+    //         ]
+    //     })
+    // });
 });
 
 
