@@ -380,7 +380,7 @@ describe("construction d'une session d'entrainement", (): void => {
         })
     });
 
-    fit('should test', () => {
+    it('should test', () => {
         const tours: MatchResult[] = [
             [
                 {
