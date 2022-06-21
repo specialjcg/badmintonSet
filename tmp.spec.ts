@@ -185,7 +185,7 @@ const ploup_3: WorkingDays = 'Monday, Tuesday';
 //type WorkingDays<DayOfWeek> = DayOfWeek
 
 describe('tmp', () => {
-    fit('should work', () => {
+    xit('should work', () => {
        // //const workingDays: WorkingDays6<'Monday' | 'Sunday' | 'Tuesday'> = 'Monday, Sunday, Tuesday';
 
 

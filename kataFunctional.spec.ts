@@ -70,27 +70,6 @@ function countMatchesAlreadyPlayAgainstThisPlayer(tours: MatchResult[], nomJoueu
     }).length;
 }
 
-const findOtherPlayerThatPlayedLeastAgainst1 = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] => {
-
-    const playerThatPlayedLeastAgainstSelectedPlayer: PlayerMatchCount[] = players
-        .map(toPlayerName)
-        .filter(nomTest => nomJoueur !== nomTest)
-        .map(nom => ({
-            nom,
-            count: countMatchesAlreadyPlayAgainstThisPlayer(tours, nomJoueur, nom)
-        }))
-        .sort(byPlayerMatchCount);
-
-    return playerThatPlayedLeastAgainstSelectedPlayer;
-
-
-
-    // return {
-    //     nom: playerThatPlayedLeastAgainstSelectedPlayer[0].nom,
-    //     score:MatchScore.NotPlayed
-    // };
-}
-
 const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerResult => {
 
    const playerThatPlayedLeastAgainstSelectedPlayer: PlayerMatchCount[] = players
@@ -318,7 +297,7 @@ describe("construction d'une session d'entrainement", (): void => {
         })
     });
 
-    it("should create a session with 4 tour for 4 players with 1 field", (): void => {
+    it("should create a session with 2 tour for 4 players with 1 field", (): void => {
         const player1 = makePlayer(0, "jeanne");
         const player2 = makePlayer(0, "serge");
         const player3 = makePlayer(0, "jeannette");
