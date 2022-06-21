@@ -11,8 +11,6 @@ const combinations = (arr: string[], min = 1, max: number) => {
 
                  arr.filter(elem=>!val.includes(elem)).map((char) =>val +', '+ char)
 
-
-
             );
 
 
@@ -31,10 +29,6 @@ describe('testcombine', () => {
     it('should combine', () => {
         const result = combinations(day, 1, 7);
         console.log('jsonListBeauty', JSON.stringify(result, null, 2));
-
-
-
-
 
     });
 });
