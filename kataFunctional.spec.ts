@@ -56,9 +56,6 @@ const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: st
     return matchesPerPlayer;
 };
 
-const isEqual = (matchToCompareTo: MatchResult, matchToAdd: MatchResult): boolean =>
-    [matchToCompareTo[0].nom, matchToCompareTo[1].nom].sort().toString() === [matchToAdd[0].nom, matchToAdd[1].nom].sort().toString();
-
 const makePlayerResult = (nom: string): PlayerResult => ({
     nom: nom,
     score: MatchScore.NotPlayed
@@ -70,9 +67,8 @@ function countMatchesAlreadyPlayAgainstThisPlayer(tours: MatchResult[], nomJoueu
     }).length;
 }
 
-const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerResult => {
-
-   const playerThatPlayedLeastAgainstSelectedPlayer: PlayerMatchCount[] = players
+const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] => {
+   return players
        .map(toPlayerName)
        .filter(nom => nomJoueur !== nom)
        .map(nom => ({
@@ -80,20 +76,10 @@ const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchRe
            count: 0
        }))
        .sort(byPlayerMatchCount);
-
-    // tours.filter((tour: MatchResult) => {
-    //     return tour[0].nom === nomJoueur && tour[1].nom === nom || tour[0].nom === nom  && tour[1].nom === nomJoueur
-    // }).length
-
-    return {
-        nom: playerThatPlayedLeastAgainstSelectedPlayer[0].nom,
-        score:MatchScore.NotPlayed
-    };
 }
 
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
-
 
     const playerPriorities: PlayerMatchCount[] = players
         .map(toPlayerName)
@@ -101,35 +87,17 @@ const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) =>
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
 
-
+    //New function
     const playerThatPlayedLeast = playerPriorities[0].nom;
 
-    //On prend le joueur qui à le moins joué (joueur1) contre le joueur qui à le moins joué contre joueur1
+    const opponentName = findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players)[0].nom
+
+    // New function
+
     matchResults.push([
         makePlayerResult(playerThatPlayedLeast),
-        findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players),
+        makePlayerResult(opponentName),
     ]);
-
-   /* // On a déja joué ce match
-    const foundExiting = tours.find((tour) => isEqual(tour, [
-        makePlayerResult(playerPriorities[0].nom),
-        makePlayerResult(playerPriorities[1].nom),
-    ]));*/
-
-    /*// On a déja joué ce match et on a plus de deux joueur
-    if (foundExiting != null && players.length !== 2) {
-        matchResults.push([
-            makePlayerResult(playerPriorities[0].nom),
-            makePlayerResult(playerPriorities[2].nom),
-        ]);
-    } else {
-
-        matchResults.push([
-            makePlayerResult(playerPriorities[0].nom),
-            makePlayerResult(playerPriorities[1].nom),
-        ]);
-
-    }*/
 
     return matchResults;
 };
@@ -359,54 +327,41 @@ describe("construction d'une session d'entrainement", (): void => {
         })
     });
 
-    it('should test', () => {
-        const tours: MatchResult[] = [
-            [
-                {
-                    nom: 'jeanne',
-                    score: MatchScore.NotPlayed
-                },
-                {
-                    nom: 'serge',
-                    score: MatchScore.NotPlayed
-                }
-            ],
-            [
-                {
-                    nom: 'jeanne',
-                    score: MatchScore.NotPlayed
-                },
-                {
-                    nom: 'jeannette',
-                    score: MatchScore.NotPlayed
-                }
-            ]
-        ];
-        const players: Player[] = [
-            {level: 0, nom: "jeanne"},
-            {level: 0, nom: "serge"},
-            {level: 0, nom: "jeanette"},
-            {level: 0, nom: "paul"}
+    it('should find the lowest priority jeannette opponent, prefer the opponent that least played against her', () => {
+        const playerPriorities: PlayerMatchCount[] = [
+            {
+                nom: 'paul',
+                count: 0
+            },
+            {
+                nom: 'jeanne',
+                count: 1
+            },
+            {
+                nom: 'serge',
+                count: 1
+            },
+
         ];
 
+        const opponents: PlayerMatchCount[] = [
+            {
+                nom: 'jeanne',
+                count: 0
+            },
+            {
+                nom: 'serge',
+                count: 0
+            },
+            {
+                nom: 'paul',
+                count: 0
+            }
+        ];
 
-        const result = findOtherPlayerThatPlayedLeastAgainst1('jeanne', tours, players);
-
-        expect(result).toStrictEqual([
-            {
-                "count": 0,
-                "nom": "paul"
-            },
-            {
-                "count": 1,
-                "nom": "jeanette"
-            },
-            {
-                "count": 1,
-                "nom": "serge"
-            },
-        ]);
+        expect(findOpponentThatLeastPlayed(opponents, playerPriorities)).toBe('paul')
     });
+
     // it("should create a session with 5 tour for 4 players with 1 field", (): void => {
     //     const player1 = makePlayer(0, "jeanne");
     //     const player2 = makePlayer(0, "serge");
