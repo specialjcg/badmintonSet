@@ -67,22 +67,6 @@ const makePlayerResult = (nom: string): PlayerResult => ({
     score: MatchScore.NotPlayed
 });
 
-const countMatchesAlreadyPlayAgainstThisPlayer = (tours: MatchResult[], nomJoueur: string, nom: string) =>
-    tours.filter((tour: MatchResult) => {
-        return tour[0].nom === nomJoueur && tour[1].nom === nom || tour[0].nom === nom && tour[1].nom === nomJoueur
-    }).length
-
-
-const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] =>
-    players
-        .map(toPlayerName)
-        .filter(nom => nomJoueur !== nom)
-        .map(nom => ({
-            nom,
-            count: countMatchesAlreadyPlayAgainstThisPlayer(tours, nomJoueur, nom)
-        }))
-        .sort(byPlayerMatchCount)
-
 const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: MatchResult[]) =>
     players
         .map(toPlayerName)
@@ -108,11 +92,9 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: MatchResult[]): Match
     ];
 };
 
-const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult[] => {
-    return groupSuccessivePlayersByTwo(players, tours);
-};
+const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult => BySimpleWhomPlayedLeast(players, tours);
 
-fdescribe("construction d'une session d'entrainement", (): void => {
+describe("construction d'une session d'entrainement", (): void => {
     it("should create a player", (): void => {
         const player = makePlayer(0, "jeanne");
 
@@ -312,93 +294,6 @@ fdescribe("construction d'une session d'entrainement", (): void => {
             ]
         })
     });
-
-    describe("fonction utilitaires", () => {
-        it('when two player should replay the same match', () => {
-            const tours: MatchResult[] =  [
-                [
-                    {
-                        nom: 'jeanne',
-                        score: MatchScore.NotPlayed
-                    },
-                    {
-                        nom: 'serge',
-                        score: MatchScore.NotPlayed
-                    }
-                ]
-            ];
-
-            const opponents: Player[] = [
-                {
-                    nom: 'jeanne',
-                    level: 0
-                },
-                {
-                    nom: 'serge',
-                    level: 0
-                }
-            ];
-
-            expect(findOtherPlayerThatPlayedLeastAgainst('jeanne', tours, opponents )[0].nom).toBe('serge')
-        });
-
-        it('should find the lowest priority jeannette opponent, prefer the opponent that least played against her', () => {
-            const tours: MatchResult[] =  [
-                [
-                    {
-                        nom: 'jeannette',
-                        score: MatchScore.NotPlayed
-                    },
-                    {
-                        nom: 'serge',
-                        score: MatchScore.NotPlayed
-                    }
-                ],
-                [
-
-                    {
-                        nom: 'jeannette',
-                        score: MatchScore.NotPlayed
-                    },
-                    {
-                        nom: 'jeanne',
-                        score: MatchScore.NotPlayed
-                    }
-
-                ],
-                [
-
-                    {
-                        nom: 'paul',
-                        score: MatchScore.NotPlayed
-                    },
-                    {
-                        nom: 'serge',
-                        score: MatchScore.NotPlayed
-                    }
-
-                ]
-            ];
-
-            const opponents: Player[] = [
-                {
-                    nom: 'jeanne',
-                    level: 0
-                },
-                {
-                    nom: 'serge',
-                    level: 0
-                },
-                {
-                    nom: 'paul',
-                    level: 0
-                }
-            ];
-
-            expect(findOtherPlayerThatPlayedLeastAgainst('jeannette', tours, opponents )[0].nom).toBe('paul')
-        });
-    });
-
 
     // it("should create a session with 5 tour for 4 players with 1 field", (): void => {
     //     const player1 = makePlayer(0, "jeanne");
