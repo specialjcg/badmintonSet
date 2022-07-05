@@ -37,7 +37,7 @@ const addTourToSession = (session: Session): Session => ({
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
 
-const toPlayerName = (player: Player) => player.nom;
+const toPlayerName = (player: { nom: string }) => player.nom;
 
 const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].nom, tour[1].nom]);
 
@@ -61,11 +61,11 @@ const makePlayerResult = (nom: string): PlayerResult => ({
     score: MatchScore.NotPlayed
 });
 
-function countMatchesAlreadyPlayAgainstThisPlayer(tours: MatchResult[], nomJoueur: string, nom: string) {
-    return tours.filter((tour: MatchResult) => {
+const countMatchesAlreadyPlayAgainstThisPlayer = (tours: MatchResult[], nomJoueur: string, nom: string) =>
+    tours.filter((tour: MatchResult) => {
         return tour[0].nom === nomJoueur && tour[1].nom === nom || tour[0].nom === nom && tour[1].nom === nomJoueur
-    }).length;
-}
+    }).length
+
 
 const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] => {
    return players
@@ -87,16 +87,18 @@ const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) =>
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
 
-    //New function
     const playerThatPlayedLeast = playerPriorities[0].nom;
 
-    const opponentName = findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players)[0].nom
-
-    // New function
+    const opponentPriorities: PlayerMatchCount[] = findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players)
+        .map(toPlayerName)
+        .concat(withToursPlayersNames(tours)
+        .filter(nom => playerThatPlayedLeast !== nom))
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
 
     matchResults.push([
         makePlayerResult(playerThatPlayedLeast),
-        makePlayerResult(opponentName),
+        makePlayerResult(opponentPriorities[0].nom),
     ]);
 
     return matchResults;
@@ -293,7 +295,7 @@ fdescribe("construction d'une session d'entrainement", (): void => {
                         score: MatchScore.NotPlayed
                     }
                 ],
-                /*[
+                [
                     {
                         nom: 'jeannette',
                         score: MatchScore.NotPlayed
@@ -302,7 +304,7 @@ fdescribe("construction d'une session d'entrainement", (): void => {
                         nom: 'paul',
                         score: MatchScore.NotPlayed
                     }
-                ],*/
+                ]
             ]
         })
     });
