@@ -67,16 +67,15 @@ const countMatchesAlreadyPlayAgainstThisPlayer = (tours: MatchResult[], nomJoueu
     }).length
 
 
-const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] => {
-   return players
-       .map(toPlayerName)
-       .filter(nom => nomJoueur !== nom)
-       .map(nom => ({
-           nom,
-           count: countMatchesAlreadyPlayAgainstThisPlayer(tours, nomJoueur, nom)
-       }))
-       .sort(byPlayerMatchCount);
-}
+const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchResult[], players: Player[]): PlayerMatchCount[] =>
+    players
+        .map(toPlayerName)
+        .filter(nom => nomJoueur !== nom)
+        .map(nom => ({
+            nom,
+            count: countMatchesAlreadyPlayAgainstThisPlayer(tours, nomJoueur, nom)
+        }))
+        .sort(byPlayerMatchCount)
 
 const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
     let matchResults: MatchResult[] = [];
