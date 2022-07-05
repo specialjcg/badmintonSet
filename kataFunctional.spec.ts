@@ -41,19 +41,25 @@ const toPlayerName = (player: { nom: string }) => player.nom;
 
 const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].nom, tour[1].nom]);
 
+const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string) => [
+    ...matchesPerPlayer,
+    {
+        nom: playerName,
+        count: 0
+    }
+];
+
+const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPlayerIndex: any) =>
+    matchesPerPlayer.map((matchPerPlayer: PlayerMatchCount, index: number) =>
+        index === matchPerPlayerIndex ? {
+            ...matchPerPlayer,
+            count: matchPerPlayer.count + 1
+        } : matchPerPlayer);
+
 const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => {
     const matchPerPlayerIndex = matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName);
 
-    if (matchPerPlayerIndex !== -1) {
-        matchesPerPlayer[matchPerPlayerIndex].count += 1;
-    } else {
-        matchesPerPlayer.push({
-            nom: playerName,
-            count: 0
-        });
-    }
-
-    return matchesPerPlayer;
+    return matchPerPlayerIndex === -1 ? initPlayerMatchCount(matchesPerPlayer, playerName) : updatePlayerMatchCount(matchesPerPlayer, matchPerPlayerIndex)
 };
 
 const makePlayerResult = (nom: string): PlayerResult => ({
@@ -77,30 +83,29 @@ const findOtherPlayerThatPlayedLeastAgainst = (nomJoueur: string, tours: MatchRe
         }))
         .sort(byPlayerMatchCount)
 
-const groupSuccessivePlayersByTwo = (players: Player[], tours: MatchResult[]) => {
-    let matchResults: MatchResult[] = [];
-
-    const playerPriorities: PlayerMatchCount[] = players
+const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: MatchResult[]) =>
+    players
         .map(toPlayerName)
         .concat(withToursPlayersNames(tours))
         .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount);
+        .sort(byPlayerMatchCount)[0].nom
 
-    const playerThatPlayedLeast = playerPriorities[0].nom;
-
-    const opponentPriorities: PlayerMatchCount[] = findOtherPlayerThatPlayedLeastAgainst(playerThatPlayedLeast, tours, players)
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tours: MatchResult[], players: Player[]): string =>
+    players
         .map(toPlayerName)
-        .concat(withToursPlayersNames(tours)
-        .filter(nom => playerThatPlayedLeast !== nom))
+        .concat(withToursPlayersNames(tours))
+        .filter(nom => playerThatPlayedLeast !== nom)
         .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount);
+        .sort(byPlayerMatchCount)[0].nom
 
-    matchResults.push([
-        makePlayerResult(playerThatPlayedLeast),
-        makePlayerResult(opponentPriorities[0].nom),
-    ]);
+const BySimpleWhomPlayedLeast = (players: Player[], tours: MatchResult[]): MatchResult => {
+    const playerName: string = playerThatLeastPlayedInPreviousTours(players, tours);
+    const opponentName: string = opponentThatLeastPlayedAgainstPlayer(playerName, tours, players);
 
-    return matchResults;
+    return [
+        makePlayerResult(playerName),
+        makePlayerResult(opponentName),
+    ];
 };
 
 const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult[] => {
