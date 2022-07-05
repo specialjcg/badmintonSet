@@ -32,7 +32,7 @@ const makeSession = (players: Player[]): Session => ({players, tours: []});
 
 const addTourToSession = (session: Session): Session => ({
     players: session.players,
-    tours: [...session.tours, ...addMatches(session)]
+    tours: [...session.tours, addMatches(session)]
 });
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
