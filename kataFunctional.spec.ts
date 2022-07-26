@@ -104,7 +104,7 @@ describe("construction d'une session d'entrainement", (): void => {
 
         const emptySession: Session = makeSession([player1, player2, player3, player4]);
 
-        const session: Session = addTourToSession(emptySession);
+        const session: Session = addTourToSession(emptySession,2);
 
         expect(session).toEqual({
             players: [
@@ -231,7 +231,7 @@ describe("construction d'une session d'entrainement", (): void => {
 
         const emptySession: Session = makeSession([player1, player2]);
 
-        const session: Session = addTourToSession(addTourToSession(emptySession));
+        const session: Session = addTourToSession(addTourToSession(emptySession,1),1);
 
         expect(session).toEqual({
             players: [
@@ -275,7 +275,7 @@ describe("construction d'une session d'entrainement", (): void => {
 
         const emptySession: Session = makeSession([player1, player2, player3]);
 
-        const session: Session = addTourToSession(addTourToSession(emptySession));
+        const session: Session = addTourToSession(addTourToSession(emptySession,1),1);
 
         expect(session).toEqual({
             players: [
