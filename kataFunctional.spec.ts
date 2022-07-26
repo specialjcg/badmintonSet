@@ -32,9 +32,9 @@ type PlayerMatchCount = {
 
 const makeSession = (players: Player[]): Session => ({players, tours: []});
 
-const addTourToSession = (session: Session): Session => ({
+const addTourToSession = (session: Session, fieldCount: number): Session => ({
     players: session.players,
-    tours: [...session.tours, addMatches(session)]
+    tours: [...session.tours, addMatches(session, fieldCount)]
 });
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
@@ -90,10 +90,22 @@ const makeMatchResult = (playerName: string, tours: MatchResult[], players: Play
     makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tours, players)),
 ];
 
-const BySimpleWhomPlayedLeast = (players: Player[], tours: MatchResult[]): MatchResult =>
-    makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours), tours, players);
+const isNotInPreviousMatch = (match1: [PlayerResult, PlayerResult]) => {
+    return (player: Player) => !match1.map((result: PlayerResult) => result.nom).includes(player.nom);
+}
 
-const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult => BySimpleWhomPlayedLeast(players, tours);
+const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): MatchResult[] => {
+    const match1: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours[0] ?? []), tours[0] ?? [], players);
+    if (fieldCount === 1) return [match1];
+    const playersMinusPlayersInMatchOne = players.filter(isNotInPreviousMatch(match1))
+    const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, tours[0] ?? []), tours[0] ?? [], playersMinusPlayersInMatchOne);
+    return [
+        match1,
+        match2
+    ];
+}
+
+const addMatches = ({players, tours}: Session, fieldCount: number): MatchResult[] => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 describe("construction d'une session d'entrainement", (): void => {
     it("should create a session with 1tour for 4 players with 2 field", (): void => {
@@ -220,7 +232,7 @@ describe("construction d'une session d'entrainement", (): void => {
     ])(`should create a session with 1 tour for 2 players %s VS %s} with 1 field`, (player1: Player, player2: Player, expected): void => {
         const emptySession: Session = makeSession([player1, player2]);
 
-        const session: Session = addTourToSession(emptySession);
+        const session: Session = addTourToSession(emptySession, 1);
 
         expect(session).toEqual(expected)
     });
@@ -324,7 +336,7 @@ describe("construction d'une session d'entrainement", (): void => {
 
         const emptySession: Session = makeSession([player1, player2, player3, player4]);
 
-        const session: Session = addTourToSession(addTourToSession(emptySession));
+        const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
 
         expect(session).toEqual({
             players: [
