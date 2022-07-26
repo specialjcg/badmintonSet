@@ -18,6 +18,8 @@ type PlayerResult = {
 
 type MatchResult = [PlayerResult, PlayerResult]
 
+type Tour = MatchResult[]
+
 type Session = {
     players: Player[],
     tours: Tour[]
@@ -297,7 +299,7 @@ describe("construction d'une session d'entrainement", (): void => {
     //     })
     // });
 
-    it("should create a session with 2 tour for 4 players with 1 field", (): void => {
+/*    it("should create a session with 2 tour for 4 players with 1 field", (): void => {
         const player1 = makePlayer(0, "jeanne");
         const player2 = makePlayer(0, "serge");
         const player3 = makePlayer(0, "jeannette");
