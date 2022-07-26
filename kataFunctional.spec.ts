@@ -56,11 +56,12 @@ const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPl
             count: matchPerPlayer.count + 1
         } : matchPerPlayer);
 
-const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => {
-    const matchPerPlayerIndex = matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName);
+const initOrUpdatePlayerMatchCount = (matchPerPlayerIndex: any, matchesPerPlayer: PlayerMatchCount[], playerName: string) =>
+    matchPerPlayerIndex === -1 ?
+        initPlayerMatchCount(matchesPerPlayer, playerName) :updatePlayerMatchCount(matchesPerPlayer, matchPerPlayerIndex);
 
-    return matchPerPlayerIndex === -1 ? initPlayerMatchCount(matchesPerPlayer, playerName) : updatePlayerMatchCount(matchesPerPlayer, matchPerPlayerIndex)
-};
+const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] =>
+    initOrUpdatePlayerMatchCount(matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName), matchesPerPlayer, playerName);
 
 const makePlayerResult = (nom: string): PlayerResult => ({
     nom: nom,
@@ -82,15 +83,13 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const BySimpleWhomPlayedLeast = (players: Player[], tours: MatchResult[]): MatchResult => {
-    const playerName: string = playerThatLeastPlayedInPreviousTours(players, tours);
-    const opponentName: string = opponentThatLeastPlayedAgainstPlayer(playerName, tours, players);
+const makeMatchResult = (playerName: string, tours: MatchResult[], players: Player[]): MatchResult => [
+    makePlayerResult(playerName),
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tours, players)),
+];
 
-    return [
-        makePlayerResult(playerName),
-        makePlayerResult(opponentName),
-    ];
-};
+const BySimpleWhomPlayedLeast = (players: Player[], tours: MatchResult[]): MatchResult =>
+    makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours), tours, players);
 
 const addMatches = ({players, tours}: { players: Player[], tours: MatchResult[] }): MatchResult => BySimpleWhomPlayedLeast(players, tours);
 
