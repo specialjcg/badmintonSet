@@ -137,7 +137,7 @@ describe("construction d'une session d'entrainement", (): void => {
                             score: MatchScore.NotPlayed
                         }
                     ],
-                /*  [
+                    [
                         {
                             nom: 'jeannette',
                             score: MatchScore.NotPlayed
@@ -146,7 +146,7 @@ describe("construction d'une session d'entrainement", (): void => {
                             nom: 'paul',
                             score: MatchScore.NotPlayed
                         }
-                    ]*/
+                    ]
                 ]
             ]
         })
