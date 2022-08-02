@@ -77,7 +77,7 @@ const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: MatchRes
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tours: MatchResult[], players: Player[]): string =>
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tour: Tour, players: Player[]): string =>
     players
         .map(toPlayerName)
         .concat(withToursPlayersNames(tours))
@@ -85,7 +85,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const makeMatchResult = (playerName: string, tours: MatchResult[], players: Player[]): MatchResult => [
+const makeMatchResult = (playerName: string, tour: Tour, players: Player[]): MatchResult => [
     makePlayerResult(playerName),
     makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tours, players)),
 ];
