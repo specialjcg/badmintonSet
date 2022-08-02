@@ -94,65 +94,41 @@ const isNotInPreviousMatch = (match1: [PlayerResult, PlayerResult]) => {
     return (player: Player) => !match1.map((result: PlayerResult) => result.nom).includes(player.nom);
 }
 
-const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): MatchResult[] => {
-    const match1: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours[0] ?? []), tours[0] ?? [], players);
+const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): Tour => {
+    const match1: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours[0] ?? [] ), tours[0] ?? [], players);
+    const playersMinusPlayersInMatchOne = players.filter(isNotInPreviousMatch(match1));
+
+    // todo: Add a for loop on player list OR fieldCount
+    //  Deux conditions d'arrêt
+    //  - Soit il n'y a plus de terrains
+    //  - Soit il n'a pas assez de joueurs
+
     if (fieldCount === 1) return [match1];
-    const playersMinusPlayersInMatchOne = players.filter(isNotInPreviousMatch(match1))
-    const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, tours[0] ?? []), tours[0] ?? [], playersMinusPlayersInMatchOne);
+    else if (fieldCount === 2) {
+
+        const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, []), [], playersMinusPlayersInMatchOne);
+        return [
+            match1,
+            match2
+        ];
+    }
+
+    const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, []), [], playersMinusPlayersInMatchOne);
+    const playersMinusPlayersInMatchOneAndTwo = playersMinusPlayersInMatchOne.filter(isNotInPreviousMatch(match2))
+
+    const match3: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOneAndTwo, []), [], playersMinusPlayersInMatchOneAndTwo);
+
     return [
         match1,
-        match2
+        match2,
+        match3
     ];
+
 }
 
 const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 describe("construction d'une session d'entrainement", (): void => {
-    it("should create a session with 1tour for 4 players with 2 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
-
-        const emptySession: Session = makeSession([player1, player2, player3, player4]);
-
-        const session: Session = addTourToSession(emptySession,2);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
-            ]
-        })
-    });
-
-
     it("should create a player", (): void => {
         const player = makePlayer(0, "jeanne");
 
@@ -372,6 +348,106 @@ describe("construction d'une session d'entrainement", (): void => {
                         ]
                     ]
                 ]
+        })
+    });
+    it("should create a session with 1tour for 4 players with 2 field", (): void => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session: Session = addTourToSession(emptySession,2);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: "jeanne"},
+                {level: 0, nom: "serge"},
+                {level: 0, nom: "jeannette"},
+                {level: 0, nom: "paul"}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: MatchScore.NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        })
+    });
+
+    it("should create a session with 1tour for 6 players with 3 fields", (): void => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+        const player5 = makePlayer(0, "marc");
+        const player6 = makePlayer(0, "romain");
+        const emptySession: Session = makeSession([player1, player2, player3, player4, player5, player6]);
+
+        const session: Session = addTourToSession(emptySession,3);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: "jeanne"},
+                {level: 0, nom: "serge"},
+                {level: 0, nom: "jeannette"},
+                {level: 0, nom: "paul"},
+                {level: 0, nom: "marc"},
+                {level: 0, nom: "romain"}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: MatchScore.NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'marc',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'romain',
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
+                ]
+            ]
         })
     });
 
