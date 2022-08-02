@@ -70,24 +70,24 @@ const makePlayerResult = (nom: string): PlayerResult => ({
     score: MatchScore.NotPlayed
 });
 
-const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: MatchResult[]) =>
+const playerThatLeastPlayedInPreviousTours = (players: Player[], tour: Tour) =>
     players
         .map(toPlayerName)
-        .concat(withToursPlayersNames(tours))
+        .concat(withToursPlayersNames(tour))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
 const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tour: Tour, players: Player[]): string =>
     players
         .map(toPlayerName)
-        .concat(withToursPlayersNames(tours))
+        .concat(withToursPlayersNames(tour))
         .filter(nom => playerThatPlayedLeast !== nom)
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
 const makeMatchResult = (playerName: string, tour: Tour, players: Player[]): MatchResult => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tours, players)),
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tour, players)),
 ];
 
 const isNotInPreviousMatch = (match1: [PlayerResult, PlayerResult]) => {
@@ -105,7 +105,7 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
     ];
 }
 
-const addMatches = ({players, tours}: Session, fieldCount: number): MatchResult[] => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 describe("construction d'une session d'entrainement", (): void => {
     it("should create a session with 1tour for 4 players with 2 field", (): void => {
