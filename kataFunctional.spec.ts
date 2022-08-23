@@ -72,14 +72,14 @@ const makePlayerResult = (nom: string): PlayerResult => ({
     score: MatchScore.NotPlayed
 });
 
-const playerThatLeastPlayedInPreviousTours = (players: Player[], tour: Tour) =>
+const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[]) =>
     players
         .map(toPlayerName)
-        .concat(withToursPlayersNames(tour))
+        .concat(tours.flatMap((tour: Tour) => withToursPlayersNames(tour)))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tour: Tour, players: Player[]): string =>
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[]): string =>
     players
         .map(toPlayerName)
         // .concat(withToursPlayersNames(tours[0]))
