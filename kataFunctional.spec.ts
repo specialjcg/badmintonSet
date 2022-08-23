@@ -129,6 +129,44 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
 const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 describe("construction d'une session d'entrainement", (): void => {
+    it('should tours ', () => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+
+        const players = [player1, player2, player3, player4];
+
+        const tours: Tour[] =
+        [
+            [
+                [
+                    {
+                        nom: 'jeanne',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        nom: 'serge',
+                        score: MatchScore.NotPlayed
+                    }
+                ],
+                [
+                    {
+                        nom: 'jeannette',
+                        score: MatchScore.NotPlayed
+                    },
+                    {
+                        nom: 'paul',
+                        score: MatchScore.NotPlayed
+                    }
+                ]
+            ],
+        ]
+
+        expect(opponentThatLeastPlayedAgainstPlayer('jeanne', players, tours)).toStrictEqual('jeannette')
+    });
+
+
     it("should create a player", (): void => {
         const player = makePlayer(0, "jeanne");
 
@@ -451,4 +489,113 @@ describe("construction d'une session d'entrainement", (): void => {
         })
     });
 
+    it("should create a session with 1 tour for 4 players with 3 fields", (): void => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session: Session = addTourToSession(emptySession,3);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: "jeanne"},
+                {level: 0, nom: "serge"},
+                {level: 0, nom: "jeannette"},
+                {level: 0, nom: "paul"},
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: MatchScore.NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        })
+    });
+    it("should create a session with 2 tour for 4 players with 2 field", (): void => {
+        const player1 = makePlayer(0, "jeanne");
+        const player2 = makePlayer(0, "serge");
+        const player3 = makePlayer(0, "jeannette");
+        const player4 = makePlayer(0, "paul");
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session: Session = addTourToSession(addTourToSession(emptySession, 2), 2);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: "jeanne"},
+                {level: 0, nom: "serge"},
+                {level: 0, nom: "jeannette"},
+                {level: 0, nom: "paul"}
+            ],
+            tours:
+                [
+                    [
+                        [
+                            {
+                                nom: 'jeanne',
+                                score: MatchScore.NotPlayed
+                            },
+                            {
+                                nom: 'serge',
+                                score: MatchScore.NotPlayed
+                            }
+                        ],
+                        [
+                            {
+                                nom: 'jeannette',
+                                score: MatchScore.NotPlayed
+                            },
+                            {
+                                nom: 'paul',
+                                score: MatchScore.NotPlayed
+                            }
+                        ]
+                    ],
+                    [
+                        [
+                            {
+                                nom: 'jeanne',
+                                score: MatchScore.NotPlayed
+                            },
+                            {
+                                nom: 'jeannette',
+                                score: MatchScore.NotPlayed
+                            }
+                        ],
+                        [
+                            {
+                                nom: 'serge',
+                                score: MatchScore.NotPlayed
+                            },
+                            {
+                                nom: 'paul',
+                                score: MatchScore.NotPlayed
+                            }
+                        ]
+                    ]
+                ]
+        })
+    });
 });
