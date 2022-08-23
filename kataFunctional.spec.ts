@@ -41,7 +41,9 @@ const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCoun
 
 const toPlayerName = (player: { nom: string }) => player.nom;
 
-const withToursPlayersNames = (tours: MatchResult[]) => tours.flatMap(tour => [tour[0].nom, tour[1].nom]);
+const withToursPlayersNames = (matchResults: MatchResult[]): string[] => matchResults.flatMap(matchResult => [matchResult[0].nom, matchResult[1].nom]);
+
+const withToursPlayersNamesAgainstPlayer = (playerName: string , matchResults: MatchResult[]): string[] => matchResults.flatMap((matchResult: MatchResult) => { return matchResult[0].nom === playerName || matchResult[1].nom === playerName ? [matchResult[0].nom, matchResult[1].nom] : [] } );
 
 const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string) => [
     ...matchesPerPlayer,
@@ -80,50 +82,38 @@ const playerThatLeastPlayedInPreviousTours = (players: Player[], tour: Tour) =>
 const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tour: Tour, players: Player[]): string =>
     players
         .map(toPlayerName)
-        .concat(withToursPlayersNames(tour))
+        // .concat(withToursPlayersNames(tours[0]))
+        .concat(tours.flatMap((tour: Tour) => withToursPlayersNamesAgainstPlayer(playerThatPlayedLeast, tour)))
         .filter(nom => playerThatPlayedLeast !== nom)
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const makeMatchResult = (playerName: string, tour: Tour, players: Player[]): MatchResult => [
+const makeMatchResult = (playerName: string, tours: Tour[], players: Player[], matchResults: MatchResult[]): MatchResult => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tour, players)),
+    // todo: use matchResults in next function
+    //  On a besoin de prendre en compte les matches qui sont joués en parallèle pour éviter de faire jouer un joueur sur deux terrains en même temps
+    //  Pour l'instant on ne prends que en compte le tour précédent dans le concat
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, players, tours)),
 ];
 
-const isNotInPreviousMatch = (match1: [PlayerResult, PlayerResult]) => {
-    return (player: Player) => !match1.map((result: PlayerResult) => result.nom).includes(player.nom);
-}
+const isNotInPreviousMatch = (match: [PlayerResult, PlayerResult]) => (player: Player): boolean =>
+    !match.map(toPlayerName).includes(player.nom);
 
 const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): Tour => {
-    const match1: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(players, tours[0] ?? [] ), tours[0] ?? [], players);
-    const playersMinusPlayersInMatchOne = players.filter(isNotInPreviousMatch(match1));
+    const playersPairs: number = players.length / 2;
+    const possibleMatchesCountInTour: number = Math.min(playersPairs, fieldCount);
 
-    // todo: Add a for loop on player list OR fieldCount
-    //  Deux conditions d'arrêt
-    //  - Soit il n'y a plus de terrains
-    //  - Soit il n'a pas assez de joueurs
+    const matchResults: MatchResult[] = [];
+    let playersMinusPlayersInPreviousMatch: Player[] = players;
 
-    if (fieldCount === 1) return [match1];
-    else if (fieldCount === 2) {
+    for (let i = 0; i < possibleMatchesCountInTour; i++) {
+        const match: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInPreviousMatch, tours), tours, playersMinusPlayersInPreviousMatch, matchResults);
 
-        const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, []), [], playersMinusPlayersInMatchOne);
-        return [
-            match1,
-            match2
-        ];
+        playersMinusPlayersInPreviousMatch = playersMinusPlayersInPreviousMatch.filter(isNotInPreviousMatch(match))
+        matchResults.push(match);
     }
 
-    const match2: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOne, []), [], playersMinusPlayersInMatchOne);
-    const playersMinusPlayersInMatchOneAndTwo = playersMinusPlayersInMatchOne.filter(isNotInPreviousMatch(match2))
-
-    const match3: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInMatchOneAndTwo, []), [], playersMinusPlayersInMatchOneAndTwo);
-
-    return [
-        match1,
-        match2,
-        match3
-    ];
-
+    return matchResults
 }
 
 const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
@@ -388,7 +378,7 @@ describe("construction d'une session d'entrainement", (): void => {
                 ]
         })
     });
-    it("should create a session with 1tour for 4 players with 2 field", (): void => {
+    it("should create a session with 1 tour for 4 players with 2 field", (): void => {
         const player1 = makePlayer(0, "jeanne");
         const player2 = makePlayer(0, "serge");
         const player3 = makePlayer(0, "jeannette");
@@ -432,7 +422,7 @@ describe("construction d'une session d'entrainement", (): void => {
         })
     });
 
-    it("should create a session with 1tour for 6 players with 3 fields", (): void => {
+    it("should create a session with 1 tour for 6 players with 3 fields", (): void => {
         const player1 = makePlayer(0, "jeanne");
         const player2 = makePlayer(0, "serge");
         const player3 = makePlayer(0, "jeannette");
