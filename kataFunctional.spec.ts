@@ -77,21 +77,18 @@ const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[]) 
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[]): string =>
-    players
-        .map(toPlayerName)
-        // .concat(withToursPlayersNames(tours[0]))
-        .concat(tours.flatMap((tour: Tour) => withToursPlayersNamesAgainstPlayer(playerThatPlayedLeast, tour)))
-        .filter(nom => playerThatPlayedLeast !== nom)
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount)[0].nom
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[], matchResults: MatchResult[]): string =>
+     players
+         .map(toPlayerName)
+         .concat(tours.flatMap((matchResults: MatchResult[]) => matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom])))
+         .filter(nom => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(nom))
+         .filter(nom => playerThatPlayedLeast !== nom)
+         .reduce(toPlayerMatchCount, [])
+         .sort(byPlayerMatchCount)[0].nom
 
 const makeMatchResult = (playerName: string, tours: Tour[], players: Player[], matchResults: MatchResult[]): MatchResult => [
     makePlayerResult(playerName),
-    // todo: use matchResults in next function
-    //  On a besoin de prendre en compte les matches qui sont joués en parallèle pour éviter de faire jouer un joueur sur deux terrains en même temps
-    //  Pour l'instant on ne prends que en compte le tour précédent dans le concat
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, players, tours)),
+       makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, players, tours,matchResults)),
 ];
 
 const isNotInPreviousMatch = (match: [PlayerResult, PlayerResult]) => (player: Player): boolean =>
@@ -151,7 +148,18 @@ describe("construction d'une session d'entrainement", (): void => {
             ],
         ]
 
-        expect(opponentThatLeastPlayedAgainstPlayer('jeanne', players, tours)).toStrictEqual('jeannette')
+        expect(opponentThatLeastPlayedAgainstPlayer('serge', players, tours,[
+            [
+                {
+                    nom: 'jeanne',
+                    score: MatchScore.NotPlayed
+                },
+                {
+                    nom: 'jeannette',
+                    score: MatchScore.NotPlayed
+                }
+            ]
+        ])).toStrictEqual('paul')
     });
 
     it('should opponentThatLeastPlayedAgainstPlayer tours with 4 players 1 fields 2 tours', () => {
