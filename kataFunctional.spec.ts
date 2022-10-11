@@ -77,14 +77,49 @@ const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[]) 
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[], matchResults: MatchResult[]): string =>
-     players
-         .map(toPlayerName)
-         .concat(tours.flatMap((matchResults: MatchResult[]) => matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom])))
-         .filter(nom => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(nom))
-         .filter(nom => playerThatPlayedLeast !== nom)
-         .reduce(toPlayerMatchCount, [])
-         .sort(byPlayerMatchCount)[0].nom
+const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string) => playerThatPlayedLeast !== nom;
+
+const extractOpponentsFromParallelMatches = (matchResults: MatchResult[]) => (nom: string) => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(nom);
+
+const withAllPlayersFromAllPreviousTours = (tours: Tour[]) => tours.flatMap((matchResults: MatchResult[]) => matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]));
+
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[], matchResults: MatchResult[]): string => {
+    const opponentPlaysCount: PlayerMatchCount[] = players
+        .map(toPlayerName)
+        // On ne prends pas en compte que `playerThatPlayedLeast` à peut-être déjà joué contre l'un des joueurs du tours précédent, du coup dans le cas ou tous les joueurs ont joués le même nombre de fois, on récupère le premier joueur disponible, mais il a potentiellement déjà joué lors du tour précédent `playerThatPlayedLeast`
+        .concat(withAllPlayersFromAllPreviousTours(tours))
+        .filter(extractOpponentsFromParallelMatches(matchResults))
+        .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+
+    if(opponentPlaysCount[0].count < opponentPlaysCount[1].count) return opponentPlaysCount[0].nom;
+
+    const opponentsThatPlayedLeast:PlayerMatchCount[] = opponentPlaysCount.filter((playerMatchCount: PlayerMatchCount) => playerMatchCount.count !== opponentPlaysCount[0].count);
+    const opponentsWithPlayerThatPlayedLeast:string[]=[...opponentsThatPlayedLeast.map((opponentThatPlayedLeast:PlayerMatchCount)=>opponentThatPlayedLeast.nom),playerThatPlayedLeast]
+    // todo proposition1
+    tours.flatMap((matchResults: MatchResult[]) => matchResults)
+        .filter(([playerResult1, playerResult2]:MatchResult)=>playerResult1.nom!==playerThatPlayedLeast && playerResult2.nom!==playerThatPlayedLeast)
+        .filter(([playerResult1, playerResult2]:MatchResult)=>!(opponentsWithPlayerThatPlayedLeast.includes(playerResult1.nom) &&opponentsWithPlayerThatPlayedLeast.includes(playerResult2.nom)) )
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+
+    // todo proposition2
+
+    // const resultArray = opponentPlaysCount.map(
+    //     (opponentPlaysCount: PlayerMatchCount): number[] => {return tours.flatMap((matchResults: MatchResult[]) => matchResults)
+    //         .map(([playerResult1, playerResult2]:MatchResult)=> isMatchBeetweenPlayers([playerResult1, playerResult2], playerName, opponentName) ? 1 : 0);}
+    // )
+    //
+    //
+    // isMatchBeetweenPlayers = ([playerResult1, playerResult2]:MatchResult, playerName, opponentName) => {
+    //     return (playerResult1.nom === playerName && playerResult2.nom === opponentName) || (playerResult1.opponentName === playerName && playerResult2.nom === playerName)
+    // }
+}
+
+//todo si un joueur a moins jouer que les autre on retourne ce joueur/
+// todo sinon si on a autant de joueur qui ont le moins jouer on les departage par celui qui a le moins jour contre le playerthatplayedLe;
+//  todo et si on ils ont autant joué contre le playerthatplayedLeast on choisi le premier de la list.
 
 const makeMatchResult = (playerName: string, tours: Tour[], players: Player[], matchResults: MatchResult[]): MatchResult => [
     makePlayerResult(playerName),
@@ -148,18 +183,8 @@ describe("construction d'une session d'entrainement", (): void => {
             ],
         ]
 
-        expect(opponentThatLeastPlayedAgainstPlayer('serge', players, tours,[
-            [
-                {
-                    nom: 'jeanne',
-                    score: MatchScore.NotPlayed
-                },
-                {
-                    nom: 'jeannette',
-                    score: MatchScore.NotPlayed
-                }
-            ]
-        ])).toStrictEqual('paul')
+        expect(opponentThatLeastPlayedAgainstPlayer('jeanne', players, tours,[]
+        )).toStrictEqual('jeannette')
     });
 
     it('should opponentThatLeastPlayedAgainstPlayer tours with 4 players 1 fields 2 tours', () => {
