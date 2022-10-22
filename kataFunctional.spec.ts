@@ -70,10 +70,11 @@ const makePlayerResult = (nom: string): PlayerResult => ({
     score: MatchScore.NotPlayed
 });
 
-const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[]) =>
+const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[], parralelMatches: MatchResult[]) =>
     players
         .map(toPlayerName)
         .concat(tours.flatMap((tour: Tour) => withToursPlayersNames(tour)))
+        .filter(extractOpponentsFromParallelMatches(parralelMatches))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom
 
@@ -135,7 +136,7 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
     let playersMinusPlayersInPreviousMatch: Player[] = players;
 
     for (let i = 0; i < possibleMatchesCountInTour; i++) {
-        const match: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInPreviousMatch, tours), tours, playersMinusPlayersInPreviousMatch, matchResults);
+        const match: MatchResult = makeMatchResult(playerThatLeastPlayedInPreviousTours(playersMinusPlayersInPreviousMatch, tours, matchResults), tours, playersMinusPlayersInPreviousMatch, matchResults);
 
         playersMinusPlayersInPreviousMatch = playersMinusPlayersInPreviousMatch.filter(isNotInPreviousMatch(match))
         matchResults.push(match);
@@ -147,6 +148,20 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
 const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 describe("construction d'une session d'entrainement", (): void => {
+    it('extractOpponentsFromParallelMatches', () => {
+        const parralelMatch: MatchResult = [
+                             {
+                                 "nom": "jeanne",
+                                 "score": 0
+                             },
+                             {
+                                 "nom": "jeannette",
+                                 "score": 0
+                             }
+                         ];
+        expect(extractOpponentsFromParallelMatches([parralelMatch])('serge')).toBe(true)
+     })
+
     it('should opponentThatLeastPlayedAgainstPlayer tours 2 fields 2 tours', () => {
         const player1 = makePlayer(0, "jeanne");
         const player2 = makePlayer(0, "serge");
