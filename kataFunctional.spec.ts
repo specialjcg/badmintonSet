@@ -79,9 +79,29 @@ const playerThatLeastPlayedInPreviousTours = (players: Player[], tours: Tour[]) 
 
 const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string) => playerThatPlayedLeast !== nom;
 
-const extractOpponentsFromParallelMatches = (matchResults: MatchResult[]) => (nom: string) => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(nom);
+const extractOpponentsFromParallelMatches = (matchResults: MatchResult[]) => (opponentName: string): boolean => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(opponentName)
 
 const withAllPlayersFromAllPreviousTours = (tours: Tour[]) => tours.flatMap((matchResults: MatchResult[]) => matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]));
+
+const allMatchesFromPreviousToursForPlayer = (playerThatPlayedLeast: string) => ([playerResult1, playerResult2]: MatchResult): boolean => playerResult1.nom !== playerThatPlayedLeast && playerResult2.nom !== playerThatPlayedLeast;
+
+const toOpponentsNames = (playerThatPlayedLeast: string) => ([playerResult1, playerResult2]: MatchResult): string => playerResult1.nom === playerThatPlayedLeast ? playerResult2.nom : playerResult1.nom;
+
+const playersNotInList = (opponentsWithPlayerThatPlayedLeast: string[]) => (playerNameOponnent: string): boolean => !(opponentsWithPlayerThatPlayedLeast.includes(playerNameOponnent));
+
+const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string, tours: Tour[]) => {
+    const opponentsThatPlayedLeast: PlayerMatchCount[] = opponentPlaysCount.filter((playerMatchCount: PlayerMatchCount) => playerMatchCount.count !== opponentPlaysCount[0].count);
+    const opponentsWithPlayerThatPlayedLeast: string[] = [...opponentsThatPlayedLeast.map((opponentThatPlayedLeast: PlayerMatchCount) => opponentThatPlayedLeast.nom), playerThatPlayedLeast]
+
+    const opponentsThatPreviousTours = tours.flatMap((matchResults: MatchResult[]) => matchResults)
+        .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
+        .map(toOpponentsNames(playerThatPlayedLeast))
+        .filter(playersNotInList(opponentsWithPlayerThatPlayedLeast))
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+
+    return opponentsThatPreviousTours[0].nom;
+};
 
 const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[], matchResults: MatchResult[]): string => {
     const opponentPlaysCount: PlayerMatchCount[] = players
@@ -93,33 +113,12 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, pla
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
 
-    if(opponentPlaysCount[0].count < opponentPlaysCount[1].count) return opponentPlaysCount[0].nom;
+    if(opponentPlaysCount.length === 0) return players.map(toPlayerName).filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))[0];
+    if(tours.length === 0  || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count) return opponentPlaysCount[0].nom;
 
-    const opponentsThatPlayedLeast:PlayerMatchCount[] = opponentPlaysCount.filter((playerMatchCount: PlayerMatchCount) => playerMatchCount.count !== opponentPlaysCount[0].count);
-    const opponentsWithPlayerThatPlayedLeast:string[]=[...opponentsThatPlayedLeast.map((opponentThatPlayedLeast:PlayerMatchCount)=>opponentThatPlayedLeast.nom),playerThatPlayedLeast]
-    // todo proposition1
-    tours.flatMap((matchResults: MatchResult[]) => matchResults)
-        .filter(([playerResult1, playerResult2]:MatchResult)=>playerResult1.nom!==playerThatPlayedLeast && playerResult2.nom!==playerThatPlayedLeast)
-        .filter(([playerResult1, playerResult2]:MatchResult)=>!(opponentsWithPlayerThatPlayedLeast.includes(playerResult1.nom) &&opponentsWithPlayerThatPlayedLeast.includes(playerResult2.nom)) )
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount);
 
-    // todo proposition2
-
-    // const resultArray = opponentPlaysCount.map(
-    //     (opponentPlaysCount: PlayerMatchCount): number[] => {return tours.flatMap((matchResults: MatchResult[]) => matchResults)
-    //         .map(([playerResult1, playerResult2]:MatchResult)=> isMatchBeetweenPlayers([playerResult1, playerResult2], playerName, opponentName) ? 1 : 0);}
-    // )
-    //
-    //
-    // isMatchBeetweenPlayers = ([playerResult1, playerResult2]:MatchResult, playerName, opponentName) => {
-    //     return (playerResult1.nom === playerName && playerResult2.nom === opponentName) || (playerResult1.opponentName === playerName && playerResult2.nom === playerName)
-    // }
+    return opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
 }
-
-//todo si un joueur a moins jouer que les autre on retourne ce joueur/
-// todo sinon si on a autant de joueur qui ont le moins jouer on les departage par celui qui a le moins jour contre le playerthatplayedLe;
-//  todo et si on ils ont autant joué contre le playerthatplayedLeast on choisi le premier de la list.
 
 const makeMatchResult = (playerName: string, tours: Tour[], players: Player[], matchResults: MatchResult[]): MatchResult => [
     makePlayerResult(playerName),
