@@ -106,7 +106,6 @@ const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (opponentPlaysCount: 
 const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, players: Player[], tours: Tour[], matchResults: MatchResult[]): string => {
     const opponentPlaysCount: PlayerMatchCount[] = players
         .map(toPlayerName)
-        // On ne prends pas en compte que `playerThatPlayedLeast` à peut-être déjà joué contre l'un des joueurs du tours précédent, du coup dans le cas ou tous les joueurs ont joués le même nombre de fois, on récupère le premier joueur disponible, mais il a potentiellement déjà joué lors du tour précédent `playerThatPlayedLeast`
         .concat(withAllPlayersFromAllPreviousTours(tours))
         .filter(extractOpponentsFromParallelMatches(matchResults))
         .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))
@@ -122,7 +121,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, pla
 
 const makeMatchResult = (playerName: string, tours: Tour[], players: Player[], matchResults: MatchResult[]): MatchResult => [
     makePlayerResult(playerName),
-       makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, players, tours,matchResults)),
+       makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, players, tours, matchResults)),
 ];
 
 const isNotInPreviousMatch = (match: [PlayerResult, PlayerResult]) => (player: Player): boolean =>
