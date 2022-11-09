@@ -1,597 +1,135 @@
-type Level = number;
 
-type Player = { nom: string; level: Level };
-
-enum MatchScore {
-    NotPlayed = 0,
-    Lose = 1,
-    Win = 2,
-    StrongWin = 3
+type SpaceXLaunch={
+    date_utc: string,
+    cores: [{reused: boolean}]
 }
 
-const makePlayer = (level: number, nom: string): Player => ({level, nom});
+const LAUNCH_COST_CO2 = 1_115_000;
 
-type PlayerResult = {
-    nom: string,
-    score: MatchScore
-}
+const BUILD_COST_CO2 = 300_000;
 
-type MatchResult = [PlayerResult, PlayerResult]
+const computeCo2Cost = (launchNumber: number, reused: number):number => launchNumber*LAUNCH_COST_CO2+(launchNumber-reused)*BUILD_COST_CO2;
 
-type Tour = MatchResult[]
+const BEEFSTEAK_COST_CO2 = 15.5;
 
-type Session = {
-    players: Player[],
-    tours: Tour[]
-};
+const ROUND_TRIP_COST_CO2 = 909;
 
-type PlayerMatchCount = {
-    nom: string;
-    count: number;
-}
 
-type TourInProgress = {
-    matchesInProgress: Tour;
-    availablePlayers: Player[];
-    previousTours: Tour[];
-}
+const computeBeffSteakCost = (launchNumber: number, reused: number): number => computeCo2Cost(launchNumber,reused)/BEEFSTEAK_COST_CO2;
 
-const makeSession = (players: Player[]): Session => ({players, tours: []});
+const computeRoundTripCost = (launchNumber: number, reused: number): number => computeCo2Cost(launchNumber,reused)/ROUND_TRIP_COST_CO2;
 
-const addTourToSession = (session: Session, fieldCount: number): Session => ({
-    players: session.players,
-    tours: [...session.tours, addMatches(session, fieldCount)]
+const toLaunchAndReusedCount = (spacexLaunches: SpaceXLaunch[]): { launchNumber: number, reused: number } => ({
+    launchNumber: 1,
+    reused: 0
 });
 
-const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) => playerMatchCount1.count - playerMatchCount2.count;
+describe('spaceX', function () {
+    it('should cost 1Million co2 when launch', function () {
+        const launchNumber:number = 1
 
-const toPlayerName = (player: { nom: string }) => player.nom;
+        const reused:number=1;
 
-const withToursPlayersNames = (matchResults: MatchResult[]): string[] => matchResults.flatMap(matchResult => [matchResult[0].nom, matchResult[1].nom]);
+        const co2Cost: number = computeCo2Cost(launchNumber, reused);
 
-const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string) => [
-    ...matchesPerPlayer,
-    {
-        nom: playerName,
-        count: 0
-    }
-];
+        expect(co2Cost).toBe(LAUNCH_COST_CO2);
 
-const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPlayerIndex: any) =>
-    matchesPerPlayer.map((matchPerPlayer: PlayerMatchCount, index: number) =>
-        index === matchPerPlayerIndex ? {
-            ...matchPerPlayer,
-            count: matchPerPlayer.count + 1
-        } : matchPerPlayer);
-
-const initOrUpdatePlayerMatchCount = (matchPerPlayerIndex: any, matchesPerPlayer: PlayerMatchCount[], playerName: string) =>
-    matchPerPlayerIndex === -1 ?
-        initPlayerMatchCount(matchesPerPlayer, playerName) : updatePlayerMatchCount(matchesPerPlayer, matchPerPlayerIndex);
-
-const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] =>
-    initOrUpdatePlayerMatchCount(matchesPerPlayer.findIndex((matchPerPlayer: PlayerMatchCount) => matchPerPlayer.nom === playerName), matchesPerPlayer, playerName);
-
-const makePlayerResult = (nom: string): PlayerResult => ({
-    nom: nom,
-    score: MatchScore.NotPlayed
-});
-
-const playerThatLeastPlayedInPreviousTours = (tourInProgress:TourInProgress): string =>
-    tourInProgress.availablePlayers
-        .map(toPlayerName)
-        .concat(tourInProgress.previousTours.flatMap((tour: Tour) => withToursPlayersNames(tour)))
-        .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount)[0].nom
-
-const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string) => playerThatPlayedLeast !== nom;
-
-const extractOpponentsFromParallelMatches = (matchResults: MatchResult[]) => (opponentName: string): boolean => !matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]).includes(opponentName)
-
-const withAllPlayersFromAllPreviousTours = (tours: Tour[]) => tours.flatMap((matchResults: MatchResult[]) => matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom]));
-
-const allMatchesFromPreviousToursForPlayer = (playerThatPlayedLeast: string) => ([playerResult1, playerResult2]: MatchResult): boolean => playerResult1.nom !== playerThatPlayedLeast && playerResult2.nom !== playerThatPlayedLeast;
-
-const toOpponentsNames = (playerThatPlayedLeast: string) => ([playerResult1, playerResult2]: MatchResult): string => playerResult1.nom === playerThatPlayedLeast ? playerResult2.nom : playerResult1.nom;
-
-const playersNotInList = (opponentsWithPlayerThatPlayedLeast: string[]) => (playerNameOponnent: string): boolean => !(opponentsWithPlayerThatPlayedLeast.includes(playerNameOponnent));
-
-const opponentThatPlayedMoreThanOthers = (minimalPlayedCount: number) => (playerMatchCount: PlayerMatchCount) =>
-    playerMatchCount.count !== minimalPlayedCount;
-
-const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) =>
-    [...opponentPlaysCount
-        .filter(opponentThatPlayedMoreThanOthers(opponentPlaysCount[0].count))
-        .map(toPlayerName), playerThatPlayedLeast];
-
-const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string, tours: Tour[]) =>
-    tours.flatMap((matchResults: MatchResult[]) => matchResults)
-        .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
-        .map(toOpponentsNames(playerThatPlayedLeast))
-        .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount)[0].nom;
-
-const opponentIsFirstInList = (tours: Tour[], opponentPlaysCount: PlayerMatchCount[]) =>
-    tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
-
-const opponentWhenEveryonePlayedOnce = (tours: Tour[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) =>
-    (opponentIsFirstInList(tours, opponentPlaysCount))
-        ? opponentPlaysCount[0].nom
-        : opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
-
-const findOpponentThatLeastPlayedAgainstPlayer = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string, tourInProgress: TourInProgress) => (opponentPlaysCount.length === 0)
-    ? tourInProgress.availablePlayers.map(toPlayerName).filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))[0]
-    : opponentWhenEveryonePlayedOnce(tourInProgress.previousTours, opponentPlaysCount, playerThatPlayedLeast);
-
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string,  tourInProgress:TourInProgress): string =>
-    findOpponentThatLeastPlayedAgainstPlayer(tourInProgress.availablePlayers
-        .map(toPlayerName)
-        .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
-        .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
-        .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount), playerThatPlayedLeast, tourInProgress)
-
-const makeMatchResult = (playerName: string,  tourInProgress: TourInProgress): MatchResult => [
-    makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName,  tourInProgress)),
-];
-
-const isNotInPreviousMatch = (match: [PlayerResult, PlayerResult]) => (player: Player): boolean =>
-    !match.map(toPlayerName).includes(player.nom);
-
-const playersPairs = (players: Player[]) => players.length / 2;
-
-const possibleMatchesCountInTour = (players: Player[], fieldCount: number) => Math.min(playersPairs(players), fieldCount);
-
-const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResult, PlayerResult]): TourInProgress => ({
-    matchesInProgress: [...tourInProgress.matchesInProgress, match],
-    availablePlayers: tourInProgress.availablePlayers.filter(isNotInPreviousMatch(match)),
-    previousTours: tourInProgress.previousTours
-});
-
-const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): Tour =>
-    new Array(possibleMatchesCountInTour(players, fieldCount)).fill(0).reduce((tourInProgress: TourInProgress): TourInProgress =>
-        updateTourInProgress(
-            tourInProgress,
-            makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
-        ),
-        {matchesInProgress: [], availablePlayers: players, previousTours: tours}).matchesInProgress
-
-const addMatches = ({
-                        players,
-                        tours
-                    }: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
-
-describe("construction d'une session d'entrainement", (): void => {
-    it("should create a player", (): void => {
-        const player = makePlayer(0, "jeanne");
-
-        expect(player).toEqual({level: 0, nom: "jeanne"})
     });
+    it('should cost 2Million co2 when 2 launch', function () {
 
-    it("should create a empty session", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "sergei");
+        const launchNumber:number = 2
 
-        const session = makeSession([player1, player2, player3, player4]);
+        const reused:number=2;
 
-        expect(session).toEqual(
-            {
-                players: [
-                    {level: 0, nom: "jeanne"},
-                    {level: 0, nom: "serge"},
-                    {level: 0, nom: "jeannette"},
-                    {level: 0, nom: "sergei"}
-                ],
-                tours: []
-            })
+        const co2Cost: number = computeCo2Cost(launchNumber, reused);
+
+        expect(co2Cost).toBe(2*LAUNCH_COST_CO2);
+
     });
+    it('should cost 2Million co2  + 600000 co2 when 2 launch no reused', function () {
 
-    it.each([
-        [
-            makePlayer(0, "jeanne"),
-            makePlayer(0, "serge"),
-            {
-                players: [
-                    {level: 0, nom: "jeanne"},
-                    {level: 0, nom: "serge"}
-                ],
-                tours: [
-                    [
-                        [
-                            {
-                                nom: "jeanne",
-                                score: MatchScore.NotPlayed
-                            },
-                            {
-                                nom: "serge",
-                                score: MatchScore.NotPlayed
-                            }
-                        ]
-                    ]
-                ]
-            }
-        ],
-        [
-            makePlayer(0, "jeannette"),
-            makePlayer(0, "sergei"),
-            {
-                players: [
-                    {level: 0, nom: "jeannette"},
-                    {level: 0, nom: "sergei"}
-                ],
-                tours:
-                    [
-                        [
-                            [
-                                {
-                                    nom: "jeannette",
-                                    score: MatchScore.NotPlayed
-                                },
-                                {
-                                    nom: "sergei",
-                                    score: MatchScore.NotPlayed
-                                }
-                            ]
-                        ]
-                    ]
-            }
-        ]
-    ])(`should create a session with 1 tour for 2 players %s VS %s} with 1 field`, (player1: Player, player2: Player, expected): void => {
-        const emptySession: Session = makeSession([player1, player2]);
+        const launchNumber:number = 2
 
-        const session: Session = addTourToSession(emptySession, 1);
+        const reused:number=0;
 
-        expect(session).toEqual(expected)
+        const co2Cost: number = computeCo2Cost(launchNumber, reused);
+
+        expect(co2Cost).toBe(2*(LAUNCH_COST_CO2+ BUILD_COST_CO2));
+
     });
+    it('should cost 2Million co2  + 300000 co2 when 2 launch 1 reused and one no reused', function () {
 
-    it("should create a session with 2 tour for 2 players with 1 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
+        const launchNumber:number = 2
 
-        const emptySession: Session = makeSession([player1, player2]);
+        const reused:number=1;
 
-        const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
+        const co2Cost: number = computeCo2Cost(launchNumber,reused);
 
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
+        expect(co2Cost).toBe(2*LAUNCH_COST_CO2+ BUILD_COST_CO2);
 
-                ],
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
+    });
+    it('should cost 2Million divise 15.5  Beefsteak 2 launch 1 reused ', function () {
+
+        const launchNumber:number = 2
+
+        const reused:number=1;
+
+        const beefSteakCost: number = computeBeffSteakCost(launchNumber,reused);
+
+        expect(beefSteakCost).toBe((2*LAUNCH_COST_CO2+ BUILD_COST_CO2)/BEEFSTEAK_COST_CO2);
+
+    });
+    it('should cost 2Million divise 909kg  RoundTrip 2 launch 1 reused ', function () {
+
+        const launchNumber:number = 2
+
+        const reused:number=1;
+
+        const roundTripCost: number = computeRoundTripCost(launchNumber,reused);
+
+        expect(roundTripCost).toBe((2*LAUNCH_COST_CO2+ BUILD_COST_CO2)/ROUND_TRIP_COST_CO2);
+
+    });
+    it('should convert api spacex launches to domain SpacexLaunch', function () {
+        const spacexLaunches:SpaceXLaunch[]=[{
+            "date_utc": "2006-03-24T22:30:00.000Z",
+            "cores": [
+                {
+
+                    "reused": false
+
+                }
             ]
-        })
-    })
 
-    it("should create a session with 2 tour for 3 players with 1 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
+        }]
 
-        const emptySession: Session = makeSession([player1, player2, player3]);
+        expect(toLaunchAndReusedCount(spacexLaunches)).toStrictEqual({launchNumber:1,reused:0})
 
-        const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                ],
-                [
-                    [
-
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        }
-
-                    ]
-                ]
-            ]
-        })
     });
+    it('should convert api spacex launches to domain SpacexLaunch with 2 launch and 1 reused', function () {
+        const spacexLaunches:SpaceXLaunch[]=[{
+            "date_utc": "2006-03-24T22:30:00.000Z",
+            "cores": [
+                {
 
-    it("should create a session with 2 tour for 4 players with 1 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
+                    "reused": false
 
-        const emptySession: Session = makeSession([player1, player2, player3, player4]);
-
-        const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ],
-                [
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
+                }
             ]
-        })
-    });
 
-    it("should create a session with 1 tour for 4 players with 2 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
+        },{
+            "date_utc": "2007-03-24T22:30:00.000Z",
+            "cores": [
+                {
 
-        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+                    "reused": true
 
-        const session: Session = addTourToSession(emptySession, 2);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
+                }
             ]
-        })
-    });
 
-    it("should create a session with 1 tour for 6 players with 3 fields", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
-        const player5 = makePlayer(0, "marc");
-        const player6 = makePlayer(0, "romain");
-        const emptySession: Session = makeSession([player1, player2, player3, player4, player5, player6]);
+        }]
 
-        const session: Session = addTourToSession(emptySession, 3);
+        expect(toLaunchAndReusedCount(spacexLaunches)).toStrictEqual({launchNumber:2,reused:1})
 
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"},
-                {level: 0, nom: "marc"},
-                {level: 0, nom: "romain"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'marc',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'romain',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
-            ]
-        })
-    });
-
-    it("should create a session with 1 tour for 4 players with 3 fields", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
-
-        const emptySession: Session = makeSession([player1, player2, player3, player4]);
-
-        const session: Session = addTourToSession(emptySession, 3);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"},
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
-            ]
-        })
-    });
-
-    it("should create a session with 2 tour for 4 players with 2 field", (): void => {
-        const player1 = makePlayer(0, "jeanne");
-        const player2 = makePlayer(0, "serge");
-        const player3 = makePlayer(0, "jeannette");
-        const player4 = makePlayer(0, "paul");
-
-        const emptySession: Session = makeSession([player1, player2, player3, player4]);
-
-        const session: Session = addTourToSession(addTourToSession(emptySession, 2), 2);
-
-        expect(session).toEqual({
-            players: [
-                {level: 0, nom: "jeanne"},
-                {level: 0, nom: "serge"},
-                {level: 0, nom: "jeannette"},
-                {level: 0, nom: "paul"}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ],
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
-            ]
-        })
     });
 });
