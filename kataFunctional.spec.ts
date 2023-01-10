@@ -233,7 +233,77 @@ const setScoreForLastTour = ({players, tours}: Session, winner: Winner): Session
 });
 
 describe('add score after every tour', () => {
-    it('should set score at the end to first Tour jeanne lose against serge and paul strong win against jeanette', () => {
+    it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
+        const sessionNotPlayed: Session = {
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: MatchScore.NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        };
+
+        const expectedSessionPlayed: Session = {
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: MatchScore.Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.Lose
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.StrongWin
+                        }
+                    ]
+                ]
+            ]
+        };
+        const sessionWithFirstMatchScore = setScoreForLastTour(sessionNotPlayed,{nom: "jeanne", score:MatchScore.Win} );
+        expect(setScoreForLastTour(sessionWithFirstMatchScore,{nom: "paul", score:MatchScore.StrongWin} )).toEqual(expectedSessionPlayed);
+    });
+
+    it('should set score at the end to first Tour jeanne win against serge', () => {
         const sessionNotPlayed: Session = {
             players: [
                 {level: 0, nom: 'jeanne'},
