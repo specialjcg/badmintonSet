@@ -219,10 +219,16 @@ const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySi
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
-const setWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner): MatchResult =>
-    playerResult1.nom === winner.nom ?
-        [winner, {nom: playerResult2.nom, score: MatchScore.Lose}] :
-        [{nom: playerResult1.nom, score: MatchScore.Lose}, winner];
+// const setWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner): MatchResult =>
+//     playerResult1.nom === winner.nom ?
+//         [winner, {nom: playerResult2.nom, score: MatchScore.Lose}] :
+//         [{nom: playerResult1.nom, score: MatchScore.Lose}, winner];
+const setWinner = ([player1, player2]: MatchResult, winner: Winner): MatchResult => {
+    const player1Score = player1.nom === winner.nom ? winner.score : MatchScore.Lose;
+    const player2Score = player2.nom === winner.nom ? winner.score : MatchScore.Lose;
+    return [{nom: player1.nom, score: player1Score}, {nom: player2.nom, score: player2Score}];
+}
+
 
 const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult): MatchResult => hasWinner(matchResult, winner) ? setWinner(matchResult, winner) : matchResult;
 
