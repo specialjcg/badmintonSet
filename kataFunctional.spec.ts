@@ -240,6 +240,37 @@ const setMatchScore = ({players, tours}: Session, winner: Winner): Session => ({
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
 
+// TODO Contrainte sur les types
+// todo refacto addtourToSession for further tours session
+// todo set score when match finish and level
+// todo set to double
+// todo add player in session when session is started
+
+/*
+
+Est ce qu'on peut en typescript avoir une contrainte sur les types qui fait qu'un tableau peut posséder plusieurs object d'un type 1 mais qu'un seul d'un type 2 ?
+
+Yes, in TypeScript, you can use a combination of interfaces and type aliases to define a constraint on an array that specifies that it must contain multiple instances of one type and only one instance of another type.
+
+Here is an example of how you might define such a constraint:
+
+
+interface Type1 {
+  // properties of Type1
+}
+interface Type2 {
+  // properties of Type2
+}
+type ArrayWithMultipleType1AndSingleType2 = (Type1 | Type2)[] & {
+  type1Count: number;
+  type2?: Type2;
+};
+
+In this example, the type "ArrayWithMultipleType1AndSingleType2" is an intersection type of an array of Type1 or Type2 and an object that contains a number "type1Count" and a optional property "type2" of Type2.
+This way, you can use this type to annotate variables and function parameters, ensuring that any array assigned to them contains the correct number of Type1 and Type2 objects.
+It's important to note that this type only ensures that the array conforms to the specified constraints at the time of assignment and not during runtime, and also this is only a way to express the constraint but not a way to enforce it.
+ */
+
 describe('add score after every tour', () => {
     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
         const player1 = makePlayer(0, 'jeanne');
