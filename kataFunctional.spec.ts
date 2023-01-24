@@ -215,32 +215,46 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
             {matchesInProgress: [], availablePlayers: players, previousTours: tours}
         ).matchesInProgress;
 
-const addMatches = ({players, tours}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+const addMatches = ({
+    players,
+    tours
+}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
-// const setWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner): MatchResult =>
-//     playerResult1.nom === winner.nom ?
-//         [winner, {nom: playerResult2.nom, score: MatchScore.Lose}] :
-//         [{nom: playerResult1.nom, score: MatchScore.Lose}, winner];
-const setWinner = ([player1, player2]: MatchResult, winner: Winner): MatchResult => {
-    const player1Score = player1.nom === winner.nom ? winner.score : MatchScore.Lose;
-    const player2Score = player2.nom === winner.nom ? winner.score : MatchScore.Lose;
-    return [{nom: player1.nom, score: player1Score}, {nom: player2.nom, score: player2Score}];
-}
+const getPlayerScore = (player1: PlayerResult, winner: Winner) => player1.nom === winner.nom ? winner.score : MatchScore.Lose;
 
+const setWinner = ([player1, player2]: MatchResult, winner: Winner): MatchResult => [
+    {nom: player1.nom, score: getPlayerScore(player1, winner)},
+    {nom: player2.nom, score: getPlayerScore(player2, winner)}
+]
 
 const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult): MatchResult => hasWinner(matchResult, winner) ? setWinner(matchResult, winner) : matchResult;
 
-// todo: test with multiple tours
-const setScoreForLastTour = ({players, tours}: Session, winner: Winner): Session => ({
+const previous = (tours: Tour[]): Tour[] => tours.slice(0, -1);
+
+const setMatchesScoreForLast = (tours: Tour[], winner: Winner): Tour => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
+
+const setMatchScore = ({players, tours}: Session, winner: Winner): Session => ({
     players,
     tours: [(tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner))]
 });
 
 describe('add score after every tour', () => {
-    it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
-        const sessionNotPlayed: Session = {
+    it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session1 = addTourToSession(emptySession, 2);
+        const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})
+        const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin})
+        const session2 = addTourToSession(session1WithScoreForMatch2, 2);
+
+        expect(setMatchScore(session2, {nom: "jeanne", score: MatchScore.Win})).toEqual({
             players: [
                 {level: 0, nom: 'jeanne'},
                 {level: 0, nom: 'serge'},
@@ -252,16 +266,38 @@ describe('add score after every tour', () => {
                     [
                         {
                             nom: 'jeanne',
-                            score: MatchScore.NotPlayed
+                            score: MatchScore.Win
                         },
                         {
                             nom: 'serge',
-                            score: MatchScore.NotPlayed
+                            score: MatchScore.Lose
                         }
                     ],
                     [
                         {
                             nom: 'jeannette',
+                            score: MatchScore.Lose
+                        },
+                        {
+                            nom: 'paul',
+                            score: MatchScore.StrongWin
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: MatchScore.Win
+                        },
+                        {
+                            nom: 'jeannette',
+                            score: MatchScore.Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'serge',
                             score: MatchScore.NotPlayed
                         },
                         {
@@ -271,9 +307,23 @@ describe('add score after every tour', () => {
                     ]
                 ]
             ]
-        };
+        });
+    });
 
-        const expectedSessionPlayed: Session = {
+    it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
+
+        const session1 = addTourToSession(emptySession, 2);
+
+        const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win});
+        const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin});
+
+        expect(session1WithScoreForMatch2).toEqual({
             players: [
                 {level: 0, nom: 'jeanne'},
                 {level: 0, nom: 'serge'},
@@ -304,9 +354,7 @@ describe('add score after every tour', () => {
                     ]
                 ]
             ]
-        };
-        const sessionWithFirstMatchScore = setScoreForLastTour(sessionNotPlayed,{nom: "jeanne", score:MatchScore.Win} );
-        expect(setScoreForLastTour(sessionWithFirstMatchScore,{nom: "paul", score:MatchScore.StrongWin} )).toEqual(expectedSessionPlayed);
+        });
     });
 
     it('should set score at the end to first Tour jeanne win against serge', () => {
@@ -343,7 +391,9 @@ describe('add score after every tour', () => {
             ]
         };
 
-        const expectedSessionPlayed: Session = {
+        const session1 = addTourToSession(emptySession, 2);
+
+        expect(setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})).toEqual({
             players: [
                 {level: 0, nom: 'jeanne'},
                 {level: 0, nom: 'serge'},
@@ -374,9 +424,7 @@ describe('add score after every tour', () => {
                     ]
                 ]
             ]
-        };
-
-        expect(setScoreForLastTour(sessionNotPlayed,{nom: "jeanne", score:MatchScore.Win} )).toEqual(expectedSessionPlayed);
+        });
     });
 });
 
@@ -743,10 +791,6 @@ describe("construction d'une session d'entrainement", (): void => {
         });
     });
 
-    //todo refacto addtourToSession for further tours session
-    //todo set score when match finish and level
-    //todo set to double
-    //todo add player in session when session is started
 
     /*
         const strategiesPriorityFirstTour = ['LevelStrategy', 'PlayedAgainstEveryoneStrategy'];
