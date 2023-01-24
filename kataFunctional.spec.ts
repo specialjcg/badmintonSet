@@ -237,7 +237,7 @@ const setMatchesScoreForLast = (tours: Tour[], winner: Winner): Tour => (tours.a
 
 const setMatchScore = ({players, tours}: Session, winner: Winner): Session => ({
     players,
-    tours: [(tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner))]
+    tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
 
 describe('add score after every tour', () => {
@@ -358,38 +358,12 @@ describe('add score after every tour', () => {
     });
 
     it('should set score at the end to first Tour jeanne win against serge', () => {
-        const sessionNotPlayed: Session = {
-            players: [
-                {level: 0, nom: 'jeanne'},
-                {level: 0, nom: 'serge'},
-                {level: 0, nom: 'jeannette'},
-                {level: 0, nom: 'paul'}
-            ],
-            tours: [
-                [
-                    [
-                        {
-                            nom: 'jeanne',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'serge',
-                            score: MatchScore.NotPlayed
-                        }
-                    ],
-                    [
-                        {
-                            nom: 'jeannette',
-                            score: MatchScore.NotPlayed
-                        },
-                        {
-                            nom: 'paul',
-                            score: MatchScore.NotPlayed
-                        }
-                    ]
-                ]
-            ]
-        };
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session = makeSession([player1, player2, player3, player4]);
 
         const session1 = addTourToSession(emptySession, 2);
 
