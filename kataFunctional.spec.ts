@@ -2,30 +2,40 @@ type Level = number;
 
 type Player = { nom: string; level: Level };
 
-enum MatchScore {
-    NotPlayed = 0,
-    Lose = 1,
-    Win = 2,
-    StrongWin = 3
-}
+type Ready = 'Ready';
+
+type ToProcess = 'ToProcess';
+
+type Status = Ready | ToProcess;
+
+const NotPlayed = 'Lose' as const;
+
+const Lose = 'Lose' as const;
+
+const Win = 'Win' as const;
+
+const StrongWin = 'StrongWin' as const;
+
+type NotPlayedScore = typeof NotPlayed;
+type MatchScore = typeof Lose  | typeof Win | typeof StrongWin;
 
 const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
-type PlayerResult = {
+type PlayerResult<T extends Status> = {
     nom: string;
-    score: MatchScore;
+    score: T extends 'Ready' ? MatchScore : NotPlayedScore;
 };
 type Winner = {
     nom: string;
-    score: MatchScore.Win | MatchScore.StrongWin;
+    score: typeof Win | typeof Lose;
 }
-type MatchResult = [PlayerResult, PlayerResult];
+type MatchResult<T extends Status> = [PlayerResult<T>, PlayerResult<T>];
 
-type Tour = MatchResult[];
+type Tour<T extends Status> = MatchResult<T>[];
 
-type Session = {
+type Session<T extends Status> = {
     players: Player[];
-    tours: Tour[];
+    tours: Tour<T>[];
 };
 
 type PlayerMatchCount = {
@@ -39,9 +49,9 @@ type TourInProgress = {
     previousTours: Tour[];
 };
 
-const makeSession = (players: Player[]): Session => ({players, tours: []});
+const makeSession = (players: Player[]): Session<Ready> => ({players, tours: []});
 
-const addTourToSession = (session: Session, fieldCount: number): Session => ({
+const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => ({
     players: session.players,
     tours: [...session.tours, addMatches(session, fieldCount)]
 });
@@ -218,7 +228,7 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: n
 const addMatches = ({
     players,
     tours
-}: Session, fieldCount: number): Tour => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+}: Session<ToProcess>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
@@ -235,7 +245,7 @@ const previous = (tours: Tour[]): Tour[] => tours.slice(0, -1);
 
 const setMatchesScoreForLast = (tours: Tour[], winner: Winner): Tour => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
 
-const setMatchScore = ({players, tours}: Session, winner: Winner): Session => ({
+const setMatchScore = ({players, tours}: Session<'Ready' | 'ToProcess'>, winner: Winner): Session<'Ready' | 'ToProcess'> => ({
     players,
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
@@ -245,6 +255,17 @@ const setMatchScore = ({players, tours}: Session, winner: Winner): Session => ({
 // todo set score when match finish and level
 // todo set to double
 // todo add player in session when session is started
+
+const player1 = makePlayer(0, 'jeanne');
+const player2 = makePlayer(0, 'serge');
+const player3 = makePlayer(0, 'jeannette');
+const player4 = makePlayer(0, 'paul');
+
+const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+const session2: Session<ToProcess> = addTourToSession(session1, 2);
 
 /*
 
