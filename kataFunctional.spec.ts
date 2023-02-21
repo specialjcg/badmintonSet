@@ -1,5 +1,4 @@
 type Level = number;
-
 type Player = { nom: string; level: Level };
 
 type Ready = 'Ready';
