@@ -7,7 +7,7 @@ type ToProcess = 'ToProcess';
 
 type Status = Ready | ToProcess;
 
-const NotPlayed = 'Lose' as const;
+const NotPlayed = 'NotPlayed' as const;
 
 const Lose = 'Lose' as const;
 
@@ -26,7 +26,7 @@ type PlayerResult<T extends Status> = {
 };
 type Winner = {
     nom: string;
-    score: typeof Win | typeof Lose;
+    score: typeof Win | typeof StrongWin;
 }
 type MatchResult<T extends Status> = [PlayerResult<T>, PlayerResult<T>];
 
@@ -34,7 +34,8 @@ type Tour<T extends Status> = MatchResult<T>[];
 
 type Session<T extends Status> = {
     players: Player[];
-    tours: Tour<T>[];
+    tours: T extends Ready ? Tour<Ready> : [...MatchResult<Ready>[], Tour<ToProcess>];
+    // tours: T extends Ready ? Tour<Ready>[] : [...Tour<Ready>[], Tour<ToProcess>];
 };
 
 type PlayerMatchCount = {
@@ -42,13 +43,48 @@ type PlayerMatchCount = {
     count: number;
 };
 
+
 type TourInProgress = {
-    matchesInProgress: Tour;
+    matchesInProgress: Tour<ToProcess>;
     availablePlayers: Player[];
-    previousTours: Tour[];
+    previousTours: Tour<Ready>[];
 };
 
+const areAllToursReady = (tours: Tour<Status>[]): tours is Tour<Ready>[] => {
+    return !tours.flat(2).some((playerResult: PlayerResult<Status>) => playerResult.score === NotPlayed);
+}
+
 const makeSession = (players: Player[]): Session<Ready> => ({players, tours: []});
+
+
+
+/*
+
+Est ce qu'on peut en typescript avoir une contrainte sur les types qui fait qu'un tableau peut posséder plusieurs object d'un type 1 mais qu'un seul d'un type 2 ?
+
+Yes, in TypeScript, you can use a combination of interfaces and type aliases to define a constraint on an array that specifies that it must contain multiple instances of one type and only one instance of another type.
+
+Here is an example of how you might define such a constraint:
+
+
+interface Type1 {
+  // properties of Type1
+}
+interface Type2 {
+  // properties of Type2
+}
+type ArrayWithMultipleType1AndSingleType2 = (Type1 | Type2)[] & {
+  type1Count: number;
+  type2?: Type2;
+};
+
+In this example, the type "ArrayWithMultipleType1AndSingleType2" is an intersection type of an array of Type1 or Type2 and an object that contains a number "type1Count" and a optional property "type2" of Type2.
+This way, you can use this type to annotate variables and function parameters, ensuring that any array assigned to them contains the correct number of Type1 and Type2 objects.
+It's important to note that this type only ensures that the array conforms to the specified constraints at the time of assignment and not during runtime, and also this is only a way to express the constraint but not a way to enforce it.
+ */
+
+// ToProcess = [...Ready, ToProcess]
+
 
 const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => ({
     players: session.players,
@@ -96,7 +132,7 @@ const toPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: st
 const playerThatLeastPlayedInPreviousTours = (tourInProgress: TourInProgress): string =>
     tourInProgress.availablePlayers
         .map(toPlayerName)
-        .concat(tourInProgress.previousTours.flatMap((tour: Tour) => withToursPlayersNames(tour)))
+        .concat(tourInProgress.previousTours.flatMap((tour: Tour<Ready>) => withToursPlayersNames(tour)))
         .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom;
@@ -105,10 +141,10 @@ const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string
     playerThatPlayedLeast !== nom;
 
 const extractOpponentsFromParallelMatches =
-    (matchResults: MatchResult[]) =>
+    (matchResults: MatchResult<ToProcess>[]) =>
         (opponentName: string): boolean =>
             !matchResults
-                .flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [playerResult1.nom, playerResult2.nom])
+                .flatMap(([playerResult1, playerResult2]: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]) => [playerResult1.nom, playerResult2.nom])
                 .includes(opponentName);
 
 const withAllPlayersFromAllPreviousTours = (tours: Tour[]) =>
@@ -126,7 +162,7 @@ const allMatchesFromPreviousToursForPlayer =
 
 const toOpponentsNames =
     (playerThatPlayedLeast: string) =>
-        ([playerResult1, playerResult2]: MatchResult): string =>
+        ([playerResult1, playerResult2]: MatchResult<Ready>): string =>
             playerResult1.nom === playerThatPlayedLeast ? playerResult2.nom : playerResult1.nom;
 
 const playersNotInList =
@@ -145,20 +181,20 @@ const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], pl
 const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
     opponentPlaysCount: PlayerMatchCount[],
     playerThatPlayedLeast: string,
-    tours: Tour[]
+    tours: Tour<Ready>[]
 ) =>
     tours
-        .flatMap((matchResults: MatchResult[]) => matchResults)
+        .flatMap((matchResults: MatchResult<Ready>[]) => matchResults)
         .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
         .map(toOpponentsNames(playerThatPlayedLeast))
         .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom;
 
-const opponentIsFirstInList = (tours: Tour[], opponentPlaysCount: PlayerMatchCount[]) =>
+const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]) =>
     tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
 
-const opponentWhenEveryonePlayedOnce = (tours: Tour[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) =>
+const opponentWhenEveryonePlayedOnce = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) =>
     opponentIsFirstInList(tours, opponentPlaysCount)
         ? opponentPlaysCount[0].nom
         : opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
@@ -189,7 +225,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
 
 const makePlayerResult = (nom: string): PlayerResult => ({
     nom: nom,
-    score: MatchScore.NotPlayed
+    score: NotPlayed
 });
 
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult => [
@@ -198,7 +234,7 @@ const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): Ma
 ];
 
 const isNotInPreviousMatch =
-    (match: [PlayerResult, PlayerResult]) =>
+    (match: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]) =>
         (player: Player): boolean =>
             !match.map(toPlayerName).includes(player.nom);
 
@@ -212,7 +248,7 @@ const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResu
     previousTours: tourInProgress.previousTours
 });
 
-const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour[], fieldCount: number): Tour =>
+const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> =>
     new Array(possibleMatchesCountInTour(players, fieldCount))
         .fill(0)
         .reduce(
@@ -229,22 +265,22 @@ const addMatches = ({
     tours
 }: Session<ToProcess>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
-const hasWinner = ([playerResult1, playerResult2]: MatchResult, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
+const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
-const getPlayerScore = (player1: PlayerResult, winner: Winner) => player1.nom === winner.nom ? winner.score : MatchScore.Lose;
+const getPlayerScore = (player1: PlayerResult<ToProcess>, winner: Winner) => player1.nom === winner.nom ? winner.score : Lose;
 
-const setWinner = ([player1, player2]: MatchResult, winner: Winner): MatchResult => [
+const setWinner = ([player1, player2]: MatchResult<ToProcess>, winner: Winner): MatchResult<Ready> => [
     {nom: player1.nom, score: getPlayerScore(player1, winner)},
     {nom: player2.nom, score: getPlayerScore(player2, winner)}
 ]
 
 const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult): MatchResult => hasWinner(matchResult, winner) ? setWinner(matchResult, winner) : matchResult;
 
-const previous = (tours: Tour[]): Tour[] => tours.slice(0, -1);
+const previous = (tours: Tour<Status>[]): Tour<Ready>[] => tours.slice(0, -1);
 
 const setMatchesScoreForLast = (tours: Tour[], winner: Winner): Tour => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
 
-const setMatchScore = ({players, tours}: Session<'Ready' | 'ToProcess'>, winner: Winner): Session<'Ready' | 'ToProcess'> => ({
+const setMatchScore = ({players, tours}: Session<Status>, winner: Winner): Session<Status> => ({
     players,
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
