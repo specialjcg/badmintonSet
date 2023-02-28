@@ -22,7 +22,7 @@ const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
 type PlayerResult<T extends Status> = {
     nom: string;
-    score: T extends 'Ready' ? MatchScore : NotPlayedScore;
+    score: T extends Ready ? MatchScore : NotPlayedScore;
 };
 type Winner = {
     nom: string;
@@ -86,17 +86,21 @@ It's important to note that this type only ensures that the array conforms to th
 // ToProcess = [...Ready, ToProcess]
 
 
-const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => ({
-    players: session.players,
-    tours: [...session.tours, addMatches(session, fieldCount)]
-});
+const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => {
+   // const plop: Tour<Status>[] =  [...session.tours, addMatches(session, fieldCount)];
+   // if(!areAllToursReady(plop))
+   return  {
+       players: session.players,
+       tours: [...session.tours, addMatches(session, fieldCount)] // as Tour<ToProcess>[]
+   };
+}
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) =>
     playerMatchCount1.count - playerMatchCount2.count;
 
 const toPlayerName = (player: { nom: string }) => player.nom;
 
-const withToursPlayersNames = (matchResults: MatchResult[]): string[] =>
+const withToursPlayersNames = (matchResults: MatchResult<Ready>[]): string[] =>
     matchResults.flatMap((matchResult) => [matchResult[0].nom, matchResult[1].nom]);
 
 const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string) => [
@@ -147,9 +151,9 @@ const extractOpponentsFromParallelMatches =
                 .flatMap(([playerResult1, playerResult2]: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]) => [playerResult1.nom, playerResult2.nom])
                 .includes(opponentName);
 
-const withAllPlayersFromAllPreviousTours = (tours: Tour[]) =>
-    tours.flatMap((matchResults: MatchResult[]) =>
-        matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult, PlayerResult]) => [
+const withAllPlayersFromAllPreviousTours = (tours: Tour<Ready>[]) =>
+    tours.flatMap((matchResults: MatchResult<Ready>[]) =>
+        matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult<Ready>, PlayerResult<Ready>]) => [
             playerResult1.nom,
             playerResult2.nom
         ])
@@ -157,7 +161,7 @@ const withAllPlayersFromAllPreviousTours = (tours: Tour[]) =>
 
 const allMatchesFromPreviousToursForPlayer =
     (playerThatPlayedLeast: string) =>
-        ([playerResult1, playerResult2]: MatchResult): boolean =>
+        ([playerResult1, playerResult2]: MatchResult<Ready>): boolean =>
             playerResult1.nom !== playerThatPlayedLeast && playerResult2.nom !== playerThatPlayedLeast;
 
 const toOpponentsNames =
@@ -223,12 +227,12 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         tourInProgress
     );
 
-const makePlayerResult = (nom: string): PlayerResult => ({
+const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     nom: nom,
     score: NotPlayed
 });
 
-const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult => [
+const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
     makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
 ];
@@ -242,7 +246,7 @@ const playersPairs = (players: Player[]) => players.length / 2;
 
 const possibleMatchesCountInTour = (players: Player[], fieldCount: number) => Math.min(playersPairs(players), fieldCount);
 
-const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResult, PlayerResult]): TourInProgress => ({
+const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]): TourInProgress => ({
     matchesInProgress: [...tourInProgress.matchesInProgress, match],
     availablePlayers: tourInProgress.availablePlayers.filter(isNotInPreviousMatch(match)),
     previousTours: tourInProgress.previousTours
@@ -263,7 +267,7 @@ const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour<Ready>[], fieldC
 const addMatches = ({
     players,
     tours
-}: Session<ToProcess>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+}: Session<Ready>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
@@ -274,11 +278,11 @@ const setWinner = ([player1, player2]: MatchResult<ToProcess>, winner: Winner): 
     {nom: player2.nom, score: getPlayerScore(player2, winner)}
 ]
 
-const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult): MatchResult => hasWinner(matchResult, winner) ? setWinner(matchResult, winner) : matchResult;
+const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult<Status>): MatchResult<Status> => hasWinner(matchResult, winner) ? setWinner(matchResult, winner) : matchResult;
 
 const previous = (tours: Tour<Status>[]): Tour<Ready>[] => tours.slice(0, -1);
 
-const setMatchesScoreForLast = (tours: Tour[], winner: Winner): Tour => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
+const setMatchesScoreForLast = (tours: Tour<Status>[], winner: Winner): Tour<Status> => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
 
 const setMatchScore = ({players, tours}: Session<Status>, winner: Winner): Session<Status> => ({
     players,
@@ -299,33 +303,17 @@ const player4 = makePlayer(0, 'paul');
 const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
 
 const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
-
 const session2: Session<ToProcess> = addTourToSession(session1, 2);
-
-/*
-
-Est ce qu'on peut en typescript avoir une contrainte sur les types qui fait qu'un tableau peut posséder plusieurs object d'un type 1 mais qu'un seul d'un type 2 ?
-
-Yes, in TypeScript, you can use a combination of interfaces and type aliases to define a constraint on an array that specifies that it must contain multiple instances of one type and only one instance of another type.
-
-Here is an example of how you might define such a constraint:
+//if(areAllToursReady(session1.tours)) {
+//    const session2: Session<ToProcess> = addTourToSession(session1, 2);
+//}
+// const session1inProgress: Session<Ready | ToProcess> = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})
+// const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin})
+//const readySession: Session<Ready> = isSessionReady(session1inProgress);
 
 
-interface Type1 {
-  // properties of Type1
-}
-interface Type2 {
-  // properties of Type2
-}
-type ArrayWithMultipleType1AndSingleType2 = (Type1 | Type2)[] & {
-  type1Count: number;
-  type2?: Type2;
-};
 
-In this example, the type "ArrayWithMultipleType1AndSingleType2" is an intersection type of an array of Type1 or Type2 and an object that contains a number "type1Count" and a optional property "type2" of Type2.
-This way, you can use this type to annotate variables and function parameters, ensuring that any array assigned to them contains the correct number of Type1 and Type2 objects.
-It's important to note that this type only ensures that the array conforms to the specified constraints at the time of assignment and not during runtime, and also this is only a way to express the constraint but not a way to enforce it.
- */
+
 
 // describe('add score after every tour', () => {
 //     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
