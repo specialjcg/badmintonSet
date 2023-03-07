@@ -42,27 +42,22 @@ type PlayerMatchCount = {
     count: number;
 };
 
-
 type TourInProgress = {
     matchesInProgress: Tour<ToProcess>;
     availablePlayers: Player[];
     previousTours: Tour<Ready>[];
 };
 
-const areAllToursReady = (tours: Tour<Status>[]): tours is Tour<Ready>[] => {
-    return !tours.flat(2).some((playerResult: PlayerResult<Status>) => playerResult.score === NotPlayed);
+const isSessionReady = (session: Session<Status>): session is Session<Ready> => {
+    return !session.tours.flat(2).some((playerResult: PlayerResult<Status>) => playerResult.score === NotPlayed);
 }
 
 const makeSession = (players: Player[]): Session<Ready> => ({players, tours: []});
 
-const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => {
-   // const plop: Tour<Status>[] =  [...session.tours, addMatches(session, fieldCount)];
-   // if(!areAllToursReady(plop))
-   return  {
-       players: session.players,
-       tours: [...session.tours, addMatches(session, fieldCount)] // as Tour<ToProcess>[]
-   };
-}
+const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => ({
+    players: session.players,
+    tours: [...session.tours, addMatches(session, fieldCount)]
+})
 
 const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) =>
     playerMatchCount1.count - playerMatchCount2.count;
@@ -253,7 +248,7 @@ const previous = (tours: Tour<Status>[]): Tour<Ready>[] => tours.slice(0, -1);
 
 const setMatchesScoreForLast = (tours: Tour<Status>[], winner: Winner): Tour<Status> => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
 
-const setMatchScore = ({players, tours}: Session<Status>, winner: Winner): Session<Status> => ({
+const setMatchScore = ({players, tours}: Session<ToProcess>, winner: Winner): Session<ToProcess> => ({
     players,
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
@@ -261,26 +256,6 @@ const setMatchScore = ({players, tours}: Session<Status>, winner: Winner): Sessi
 // todo set score when match finish and level
 // todo set to double
 // todo add player in session when session is started
-
-const player1 = makePlayer(0, 'jeanne');
-const player2 = makePlayer(0, 'serge');
-const player3 = makePlayer(0, 'jeannette');
-const player4 = makePlayer(0, 'paul');
-
-const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
-
-const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
-const session2: Session<ToProcess> = addTourToSession(session1, 2);
-//if(areAllToursReady(session1.tours)) {
-//    const session2: Session<ToProcess> = addTourToSession(session1, 2);
-//}
-// const session1inProgress: Session<Ready | ToProcess> = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})
-// const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin})
-//const readySession: Session<Ready> = isSessionReady(session1inProgress);
-
-
-
-
 
 describe('add score after every tour', () => {
     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
