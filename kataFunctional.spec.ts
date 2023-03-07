@@ -34,8 +34,7 @@ type Tour<T extends Status> = MatchResult<T>[];
 
 type Session<T extends Status> = {
     players: Player[];
-    tours: T extends Ready ? Tour<Ready> : [...MatchResult<Ready>[], Tour<ToProcess>];
-    // tours: T extends Ready ? Tour<Ready>[] : [...Tour<Ready>[], Tour<ToProcess>];
+    tours: T extends Ready ? Tour<Ready>[] : [...Tour<Ready>[], Tour<ToProcess>];
 };
 
 type PlayerMatchCount = {
@@ -55,36 +54,6 @@ const areAllToursReady = (tours: Tour<Status>[]): tours is Tour<Ready>[] => {
 }
 
 const makeSession = (players: Player[]): Session<Ready> => ({players, tours: []});
-
-
-
-/*
-
-Est ce qu'on peut en typescript avoir une contrainte sur les types qui fait qu'un tableau peut posséder plusieurs object d'un type 1 mais qu'un seul d'un type 2 ?
-
-Yes, in TypeScript, you can use a combination of interfaces and type aliases to define a constraint on an array that specifies that it must contain multiple instances of one type and only one instance of another type.
-
-Here is an example of how you might define such a constraint:
-
-
-interface Type1 {
-  // properties of Type1
-}
-interface Type2 {
-  // properties of Type2
-}
-type ArrayWithMultipleType1AndSingleType2 = (Type1 | Type2)[] & {
-  type1Count: number;
-  type2?: Type2;
-};
-
-In this example, the type "ArrayWithMultipleType1AndSingleType2" is an intersection type of an array of Type1 or Type2 and an object that contains a number "type1Count" and a optional property "type2" of Type2.
-This way, you can use this type to annotate variables and function parameters, ensuring that any array assigned to them contains the correct number of Type1 and Type2 objects.
-It's important to note that this type only ensures that the array conforms to the specified constraints at the time of assignment and not during runtime, and also this is only a way to express the constraint but not a way to enforce it.
- */
-
-// ToProcess = [...Ready, ToProcess]
-
 
 const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<ToProcess> => {
    // const plop: Tour<Status>[] =  [...session.tours, addMatches(session, fieldCount)];
@@ -289,8 +258,6 @@ const setMatchScore = ({players, tours}: Session<Status>, winner: Winner): Sessi
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
 
-// TODO Contrainte sur les types
-// todo refacto addtourToSession for further tours session
 // todo set score when match finish and level
 // todo set to double
 // todo add player in session when session is started
@@ -315,613 +282,578 @@ const session2: Session<ToProcess> = addTourToSession(session1, 2);
 
 
 
-// describe('add score after every tour', () => {
-//     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session1 = addTourToSession(emptySession, 2);
-//         const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})
-//         const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin})
-//         const session2 = addTourToSession(session1WithScoreForMatch2, 2);
-//
-//         expect(setMatchScore(session2, {nom: "jeanne", score: MatchScore.Win})).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.Win
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.Lose
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.Lose
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.StrongWin
-//                         }
-//                     ]
-//                 ],
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.Win
-//                         },
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.Lose
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session1 = addTourToSession(emptySession, 2);
-//
-//         const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win});
-//         const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: MatchScore.StrongWin});
-//
-//         expect(session1WithScoreForMatch2).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.Win
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.Lose
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.Lose
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.StrongWin
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should set score at the end to first Tour jeanne win against serge', () => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session1 = addTourToSession(emptySession, 2);
-//
-//         expect(setMatchScore(session1, {nom: "jeanne", score: MatchScore.Win})).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.Win
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.Lose
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-// });
-//
-// describe("construction d'une session d'entrainement", (): void => {
-//     it('should create a player', (): void => {
-//         const player = makePlayer(0, 'jeanne');
-//
-//         expect(player).toEqual({level: 0, nom: 'jeanne'});
-//     });
-//
-//     it('should create a empty session', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'sergei');
-//
-//         const session = makeSession([player1, player2, player3, player4]);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'sergei'}
-//             ],
-//             tours: []
-//         });
-//     });
-//
-//     it.each([
-//         [
-//             makePlayer(0, 'jeanne'),
-//             makePlayer(0, 'serge'),
-//             {
-//                 players: [
-//                     {level: 0, nom: 'jeanne'},
-//                     {level: 0, nom: 'serge'}
-//                 ],
-//                 tours: [
-//                     [
-//                         [
-//                             {
-//                                 nom: 'jeanne',
-//                                 score: MatchScore.NotPlayed
-//                             },
-//                             {
-//                                 nom: 'serge',
-//                                 score: MatchScore.NotPlayed
-//                             }
-//                         ]
-//                     ]
-//                 ]
-//             }
-//         ],
-//         [
-//             makePlayer(0, 'jeannette'),
-//             makePlayer(0, 'sergei'),
-//             {
-//                 players: [
-//                     {level: 0, nom: 'jeannette'},
-//                     {level: 0, nom: 'sergei'}
-//                 ],
-//                 tours: [
-//                     [
-//                         [
-//                             {
-//                                 nom: 'jeannette',
-//                                 score: MatchScore.NotPlayed
-//                             },
-//                             {
-//                                 nom: 'sergei',
-//                                 score: MatchScore.NotPlayed
-//                             }
-//                         ]
-//                     ]
-//                 ]
-//             }
-//         ]
-//     ])(
-//         `should create a session with 1 tour for 2 players %s VS %s} with 1 field`,
-//         (player1: Player, player2: Player, expected): void => {
-//             const emptySession: Session = makeSession([player1, player2]);
-//
-//             const session: Session = addTourToSession(emptySession, 1);
-//
-//             expect(session).toEqual(expected);
-//         }
-//     );
-//
-//     it('should create a session with 2 tour for 2 players with 1 field', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//
-//         const emptySession: Session = makeSession([player1, player2]);
-//
-//         const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ],
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should create a session with 2 tour for 3 players with 1 field', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3]);
-//
-//         const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ],
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should create a session with 2 tour for 4 players with 1 field', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session: Session = addTourToSession(addTourToSession(emptySession, 1), 1);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ],
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should create a session with 1 tour for 4 players with 2 field', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session: Session = addTourToSession(emptySession, 2);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should create a session with 1 tour for 6 players with 3 fields', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//         const player5 = makePlayer(0, 'marc');
-//         const player6 = makePlayer(0, 'romain');
-//         const emptySession: Session = makeSession([player1, player2, player3, player4, player5, player6]);
-//
-//         const session: Session = addTourToSession(emptySession, 3);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'},
-//                 {level: 0, nom: 'marc'},
-//                 {level: 0, nom: 'romain'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'marc',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'romain',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//     it('should create a session with 1 tour for 4 players with 3 fields', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session: Session = addTourToSession(emptySession, 3);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-//
-//
-//     /*
-//         const strategiesPriorityFirstTour = ['LevelStrategy', 'PlayedAgainstEveryoneStrategy'];
-//       const strategiesPrioritySecondTour = ['PlayedAgainstEveryoneStrategy', 'LevelStrategy'];
-//
-//       const tourParams = [
-//         {
-//           fieldCount: 2,
-//           strategyPriority: strategiesPriorityFirstTour
-//         },
-//         {
-//           fieldCount: 2,
-//           strategyPriority: strategiesPrioritySecondTour
-//         }
-//       ];
-//      */
-//
-//     it('should create a session with 2 tour for 4 players with 2 field', (): void => {
-//         const player1 = makePlayer(0, 'jeanne');
-//         const player2 = makePlayer(0, 'serge');
-//         const player3 = makePlayer(0, 'jeannette');
-//         const player4 = makePlayer(0, 'paul');
-//
-//         const emptySession: Session = makeSession([player1, player2, player3, player4]);
-//
-//         const session: Session = [2, 2].reduce(addTourToSession, emptySession);
-//
-//         //const session: Session = addTourToSession(addTourToSession(emptySession, 2), 2);
-//
-//         expect(session).toEqual({
-//             players: [
-//                 {level: 0, nom: 'jeanne'},
-//                 {level: 0, nom: 'serge'},
-//                 {level: 0, nom: 'jeannette'},
-//                 {level: 0, nom: 'paul'}
-//             ],
-//             tours: [
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ],
-//                 [
-//                     [
-//                         {
-//                             nom: 'jeanne',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'jeannette',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ],
-//                     [
-//                         {
-//                             nom: 'serge',
-//                             score: MatchScore.NotPlayed
-//                         },
-//                         {
-//                             nom: 'paul',
-//                             score: MatchScore.NotPlayed
-//                         }
-//                     ]
-//                 ]
-//             ]
-//         });
-//     });
-// });
+describe('add score after every tour', () => {
+    it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
+        const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: Win})
+        const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {
+            nom: "paul",
+            score: StrongWin
+        })
+
+        if (!isSessionReady(session1WithScoreForMatch2)) throw new Error('session is not ready');
+
+        const session2 = addTourToSession(session1WithScoreForMatch2, 2);
+
+        expect(setMatchScore(session2, {nom: "jeanne", score: Win})).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: Lose
+                        },
+                        {
+                            nom: 'paul',
+                            score: StrongWin
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'jeannette',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+
+    it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session1 = addTourToSession(emptySession, 2);
+
+        const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: Win});
+        const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {nom: "paul", score: StrongWin});
+
+        expect(session1WithScoreForMatch2).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: Lose
+                        },
+                        {
+                            nom: 'paul',
+                            score: StrongWin
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+    it('should set score at the end to first Tour jeanne win against serge', () => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session1:Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        expect(setMatchScore(session1, {nom: "jeanne", score: Win})).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+});
+
+describe("construction d'une session d'entrainement", (): void => {
+    it('should create a player', (): void => {
+        const player = makePlayer(0, 'jeanne');
+
+        expect(player).toEqual({level: 0, nom: 'jeanne'});
+    });
+
+    it('should create a empty session', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'sergei');
+
+        const session = makeSession([player1, player2, player3, player4]);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'sergei'}
+            ],
+            tours: []
+        });
+    });
+
+    it.each([
+        [
+            makePlayer(0, 'jeanne'),
+            makePlayer(0, 'serge'),
+            {
+                players: [
+                    {level: 0, nom: 'jeanne'},
+                    {level: 0, nom: 'serge'}
+                ],
+                tours: [
+                    [
+                        [
+                            {
+                                nom: 'jeanne',
+                                score: NotPlayed
+                            },
+                            {
+                                nom: 'serge',
+                                score: NotPlayed
+                            }
+                        ]
+                    ]
+                ]
+            }
+        ],
+        [
+            makePlayer(0, 'jeannette'),
+            makePlayer(0, 'sergei'),
+            {
+                players: [
+                    {level: 0, nom: 'jeannette'},
+                    {level: 0, nom: 'sergei'}
+                ],
+                tours: [
+                    [
+                        [
+                            {
+                                nom: 'jeannette',
+                                score: NotPlayed
+                            },
+                            {
+                                nom: 'sergei',
+                                score: NotPlayed
+                            }
+                        ]
+                    ]
+                ]
+            }
+        ]
+    ])(
+        `should create a session with 1 tour for 2 players %s VS %s} with 1 field`,
+        (player1: Player, player2: Player, expected): void => {
+            const emptySession: Session<Ready> = makeSession([player1, player2]);
+
+            const session: Session<ToProcess> = addTourToSession(emptySession, 1);
+
+            expect(session).toEqual(expected);
+        }
+    );
+
+    it('should create a session with 2 tour for 2 players with 1 field', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2]);
+
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 1)
+
+        const sessionWithScores: Session<ToProcess> = setMatchScore(session1, {nom: 'jeanne', score: Win})
+
+        if (!isSessionReady(sessionWithScores)) throw new Error('session is not ready');
+
+        const session: Session<ToProcess> = addTourToSession(sessionWithScores, 1);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+    it('should create a session with 2 tour for 4 players with 1 field', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 1)
+
+        const sessionWithScores: Session<ToProcess> =
+            setMatchScore(session1, {nom: 'jeanne', score: Win})
+
+        if (!isSessionReady(sessionWithScores)) throw new Error('session is not ready');
+
+        const session: Session<ToProcess> = addTourToSession(sessionWithScores, 1);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+    it('should create a session with 1 tour for 4 players with 2 field', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+    it('should create a session with 1 tour for 6 players with 3 fields', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+        const player5 = makePlayer(0, 'marc');
+        const player6 = makePlayer(0, 'romain');
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4, player5, player6]);
+
+        const session: Session<ToProcess> = addTourToSession(emptySession, 3);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'},
+                {level: 0, nom: 'marc'},
+                {level: 0, nom: 'romain'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'marc',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'romain',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+    it('should create a session with 1 tour for 4 players with 3 fields', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session: Session<ToProcess> = addTourToSession(emptySession, 3);
+
+        expect(session).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
+   it('should create a session with 2 tour for 4 players with 2 field', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+        const player3 = makePlayer(0, 'jeannette');
+        const player4 = makePlayer(0, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+
+       const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+       const session1withMatch1Scores: Session<ToProcess> = setMatchScore(session1, { nom: 'paul', score: StrongWin});
+       const session1withMatch2Scores: Session<ToProcess> = setMatchScore(session1withMatch1Scores, { nom: 'jeanne', score: Win});
+
+       if (!isSessionReady(session1withMatch2Scores)) throw new Error('session is not ready');
+
+       const session2: Session<ToProcess> = addTourToSession(session1withMatch2Scores, 2);
+
+        expect(session2).toEqual({
+            players: [
+                {level: 0, nom: 'jeanne'},
+                {level: 0, nom: 'serge'},
+                {level: 0, nom: 'jeannette'},
+                {level: 0, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'jeannette',
+                            score: Lose
+                        },
+                        {
+                            nom: 'paul',
+                            score: StrongWin
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'jeannette',
+                            score: NotPlayed
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'serge',
+                            score: NotPlayed
+                        },
+                        {
+                            nom: 'paul',
+                            score: NotPlayed
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+});
