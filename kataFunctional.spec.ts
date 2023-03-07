@@ -216,17 +216,17 @@ const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResu
     previousTours: tourInProgress.previousTours
 });
 
-const BySimpleWhomPlayedLeast = (players: Player[], tours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> =>
-    new Array(possibleMatchesCountInTour(players, fieldCount))
-        .fill(0)
-        .reduce(
-            (tourInProgress: TourInProgress): TourInProgress =>
-                updateTourInProgress(
-                    tourInProgress,
-                    makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
-                ),
-            {matchesInProgress: [], availablePlayers: players, previousTours: tours}
-        ).matchesInProgress;
+const BySimpleWhomPlayedLeast = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
+    .fill(0)
+    .reduce(
+       (tourInProgress: TourInProgress): TourInProgress =>
+           updateTourInProgress(
+               tourInProgress,
+               makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
+           ),
+       {matchesInProgress: [], availablePlayers: players, previousTours: previousTours}
+    ).matchesInProgress;
+
 
 const addMatches = ({
     players,
