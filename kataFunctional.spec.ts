@@ -16,7 +16,7 @@ const Win = 'Win' as const;
 const StrongWin = 'StrongWin' as const;
 
 type NotPlayedScore = typeof NotPlayed;
-type MatchScore = typeof Lose  | typeof Win | typeof StrongWin;
+type MatchScore = typeof Lose | typeof Win | typeof StrongWin;
 
 const makePlayer = (level: number, nom: string): Player => ({level, nom});
 
@@ -219,19 +219,19 @@ const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResu
 const BySimpleWhomPlayedLeast = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
     .fill(0)
     .reduce(
-       (tourInProgress: TourInProgress): TourInProgress =>
-           updateTourInProgress(
-               tourInProgress,
-               makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
-           ),
-       {matchesInProgress: [], availablePlayers: players, previousTours: previousTours}
+        (tourInProgress: TourInProgress): TourInProgress =>
+            updateTourInProgress(
+                tourInProgress,
+                makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
+            ),
+        {matchesInProgress: [], availablePlayers: players, previousTours: previousTours}
     ).matchesInProgress;
 
 
 const addMatches = ({
-    players,
-    tours
-}: Session<Ready>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+                        players,
+                        tours
+                    }: Session<Ready>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
@@ -389,7 +389,7 @@ describe('add score after every tour', () => {
 
         const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
 
-        const session1:Session<ToProcess> = addTourToSession(emptySession, 2);
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
 
         expect(setMatchScore(session1, {nom: "jeanne", score: Win})).toEqual({
             players: [
@@ -758,7 +758,7 @@ describe("construction d'une session d'entrainement", (): void => {
         });
     });
 
-   it('should create a session with 2 tour for 4 players with 2 field', (): void => {
+    it('should create a session with 2 tour for 4 players with 2 field', (): void => {
         const player1 = makePlayer(0, 'jeanne');
         const player2 = makePlayer(0, 'serge');
         const player3 = makePlayer(0, 'jeannette');
@@ -767,14 +767,17 @@ describe("construction d'une session d'entrainement", (): void => {
         const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
 
 
-       const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
 
-       const session1withMatch1Scores: Session<ToProcess> = setMatchScore(session1, { nom: 'paul', score: StrongWin});
-       const session1withMatch2Scores: Session<ToProcess> = setMatchScore(session1withMatch1Scores, { nom: 'jeanne', score: Win});
+        const session1withMatch1Scores: Session<ToProcess> = setMatchScore(session1, {nom: 'paul', score: StrongWin});
+        const session1withMatch2Scores: Session<ToProcess> = setMatchScore(session1withMatch1Scores, {
+            nom: 'jeanne',
+            score: Win
+        });
 
-       if (!isSessionReady(session1withMatch2Scores)) throw new Error('session is not ready');
+        if (!isSessionReady(session1withMatch2Scores)) throw new Error('session is not ready');
 
-       const session2: Session<ToProcess> = addTourToSession(session1withMatch2Scores, 2);
+        const session2: Session<ToProcess> = addTourToSession(session1withMatch2Scores, 2);
 
         expect(session2).toEqual({
             players: [
@@ -831,4 +834,37 @@ describe("construction d'une session d'entrainement", (): void => {
             ]
         });
     });
+
+
+    /* it('should and compute level at the end of a session', (): void => {
+         const player1 = makePlayer(0, 'jeanne');
+         const player2 = makePlayer(0, 'serge');
+         const player3 = makePlayer(0, 'jeannette');
+         const player4 = makePlayer(0, 'paul');
+ 
+         const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+ 
+         const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+ 
+         const sessionTour1withMatch1Scores: Session<ToProcess> = setMatchScore(sessionTour1, { nom: 'paul', score: StrongWin});
+         const sessionTour1withMatch2Scores: Session<ToProcess> = setMatchScore(sessionTour1withMatch1Scores, { nom: 'jeanne', score: Win});
+ 
+         if (!isSessionReady(sessionTour1withMatch2Scores)) throw new Error('session is not ready');
+ 
+         const sessionTour2: Session<ToProcess> = addTourToSession(sessionTour1withMatch2Scores, 2);
+ 
+         const sessionTour2withMatch1Scores: Session<ToProcess> = setMatchScore(sessionTour2, { nom: 'serge', score: StrongWin});
+         const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour2withMatch1Scores, { nom: 'jeanne', score: Win});
+ 
+         if (!isSessionReady(sessionFinished)) throw new Error('session is not ready');
+ 
+         const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
+ 
+         expect(playersWithNewLevels).toEqual([
+             {level: 6, nom: 'jeanne'},
+             {level: 5, nom: 'serge'},
+             {level: 2, nom: 'jeannette'},
+             {level: 5, nom: 'paul'}
+         ]);
+     });*/
 });
