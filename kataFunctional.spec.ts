@@ -333,7 +333,6 @@ describe('add score after every tour', () => {
         });
     });
 
-
     it('should set score at the end to first Tour jeanne win against serge and paul strong win against jeanette', () => {
         const player1 = makePlayer(0, 'jeanne');
         const player2 = makePlayer(0, 'serge');
