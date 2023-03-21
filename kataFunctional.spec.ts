@@ -195,7 +195,7 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     nom: nom,
     score: NotPlayed
 });
-
+//todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
     makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
@@ -253,6 +253,9 @@ const setMatchScore = ({players, tours}: Session<ToProcess>, winner: Winner): Se
     tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
 });
 
+const addMatchResultToLevelFor = (player: Player) => (level: number, matchResult: MatchResult<Ready>) =>
+    level + scoreFunction(player.nom, matchResult);
+
 const computeLevels = (session: Session<Ready>) => session.players.map((player: Player): Player => ({
         nom: player.nom,
         level: session.tours.flat().reduce((level: number, matchResult: MatchResult<Ready>) => {
@@ -267,78 +270,15 @@ const scoreRecord: Record<MatchScore, 1 | 2 | 3> = {
     StrongWin: 1
 };
 
-
-const scoreFunction = (playerName: string, [player1, player2]: MatchResult<Ready>): number => {
-    if (player1.nom !== playerName && player2.nom !== playerName) return 0;
-    if (player1.nom === playerName) return scoreRecord[player2.score]
-
     return scoreRecord[player1.score]
 }
 
+const playerScore = (playerName: string, [player1, player2]: MatchResult<Ready>) =>
+    scoreRecord[player1.nom === playerName ? player2.score : player1.score];
 
-describe('Temps', () => {
-    it('should compute level at the end of a session of a Session of two players with StrongWin', (): void => {
-        const player1 = makePlayer(0, 'jeanne');
-        const player2 = makePlayer(0, 'serge');
+const scoreFunction = (playerName: string, matchResult: MatchResult<Ready>): number =>
+    isPlayerInMatch(playerName, matchResult) ? playerScore(playerName, matchResult) : 0;
 
-        const emptySession: Session<Ready> = makeSession([player1, player2]);
-
-        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
-
-        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'jeanne', score: StrongWin});
-
-        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
-
-        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
-
-        expect(playersWithNewLevels).toEqual([
-            {level: 3, nom: 'jeanne'},
-            {level: 1, nom: 'serge'},
-        ]);
-    });
-
-    it('should compute level at the end of a session of a Session of two players with Win', (): void => {
-        const player1 = makePlayer(0, 'jeanne');
-        const player2 = makePlayer(0, 'serge');
-
-        const emptySession: Session<Ready> = makeSession([player1, player2]);
-
-        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
-
-        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'jeanne', score: Win});
-
-        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
-
-        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
-
-        expect(playersWithNewLevels).toEqual([
-            {level: 3, nom: 'jeanne'},
-            {level: 2, nom: 'serge'},
-        ]);
-    });
-
-    it('should compute level at the end of a session of a Session of two different players with Win', (): void => {
-        const player1 = makePlayer(0, 'paul');
-        const player2 = makePlayer(0, 'serge');
-
-        const emptySession: Session<Ready> = makeSession([player1, player2]);
-
-        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
-
-        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'serge', score: Win});
-
-        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
-
-        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
-
-        expect(playersWithNewLevels).toEqual([
-            {level: 2, nom: 'paul'},
-            {level: 3, nom: 'serge'},
-        ]);
-    });
-});
-
-// todo set and level
 // todo set to double
 // todo add player in session when session is started
 
