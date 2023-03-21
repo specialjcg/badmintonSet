@@ -59,15 +59,15 @@ const addTourToSession = (session: Session<Ready>, fieldCount: number): Session<
     tours: [...session.tours, addMatches(session, fieldCount)]
 })
 
-const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount) =>
+const byPlayerMatchCount = (playerMatchCount1: PlayerMatchCount, playerMatchCount2: PlayerMatchCount): number =>
     playerMatchCount1.count - playerMatchCount2.count;
 
-const toPlayerName = (player: { nom: string }) => player.nom;
+const toPlayerName = (player: { nom: string }): string => player.nom;
 
 const withToursPlayersNames = (matchResults: MatchResult<Ready>[]): string[] =>
     matchResults.flatMap((matchResult) => [matchResult[0].nom, matchResult[1].nom]);
 
-const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string) => [
+const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] => [
     ...matchesPerPlayer,
     {
         nom: playerName,
@@ -75,7 +75,7 @@ const initPlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], playerName: 
     }
 ];
 
-const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPlayerIndex: any) =>
+const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPlayerIndex: number): PlayerMatchCount[] =>
     matchesPerPlayer.map((matchPerPlayer: PlayerMatchCount, index: number) =>
         index === matchPerPlayerIndex
             ? {
@@ -85,7 +85,7 @@ const updatePlayerMatchCount = (matchesPerPlayer: PlayerMatchCount[], matchPerPl
             : matchPerPlayer
     );
 
-const initOrUpdatePlayerMatchCount = (matchPerPlayerIndex: any, matchesPerPlayer: PlayerMatchCount[], playerName: string) =>
+const initOrUpdatePlayerMatchCount = (matchPerPlayerIndex: any, matchesPerPlayer: PlayerMatchCount[], playerName: string): PlayerMatchCount[] =>
     matchPerPlayerIndex === -1
         ? initPlayerMatchCount(matchesPerPlayer, playerName)
         : updatePlayerMatchCount(matchesPerPlayer, matchPerPlayerIndex);
@@ -105,7 +105,7 @@ const playerThatLeastPlayedInPreviousTours = (tourInProgress: TourInProgress): s
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom;
 
-const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string) =>
+const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string) : boolean =>
     playerThatPlayedLeast !== nom;
 
 const extractOpponentsFromParallelMatches =
@@ -117,7 +117,7 @@ const extractOpponentsFromParallelMatches =
 
 const withAllPlayersFromAllPreviousTours = (tours: Tour<Ready>[]) =>
     tours.flatMap((matchResults: MatchResult<Ready>[]) =>
-        matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult<Ready>, PlayerResult<Ready>]) => [
+        matchResults.flatMap(([playerResult1, playerResult2]: [PlayerResult<Ready>, PlayerResult<Ready>]): string[] => [
             playerResult1.nom,
             playerResult2.nom
         ])
@@ -135,13 +135,13 @@ const toOpponentsNames =
 
 const playersNotInList =
     (opponentsWithPlayerThatPlayedLeast: string[]) =>
-        (playerNameOponnent: string): boolean =>
-            !opponentsWithPlayerThatPlayedLeast.includes(playerNameOponnent);
+        (playerNameOpponent: string): boolean =>
+            !opponentsWithPlayerThatPlayedLeast.includes(playerNameOpponent);
 
-const opponentThatPlayedMoreThanOthers = (minimalPlayedCount: number) => (playerMatchCount: PlayerMatchCount) =>
+const opponentThatPlayedMoreThanOthers = (minimalPlayedCount: number) => (playerMatchCount: PlayerMatchCount): boolean =>
     playerMatchCount.count !== minimalPlayedCount;
 
-const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) => [
+const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string): string[] => [
     ...opponentPlaysCount.filter(opponentThatPlayedMoreThanOthers(opponentPlaysCount[0].count)).map(toPlayerName),
     playerThatPlayedLeast
 ];
@@ -159,10 +159,10 @@ const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount)[0].nom;
 
-const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]) =>
+const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]): boolean =>
     tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
 
-const opponentWhenEveryonePlayedOnce = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string) =>
+const opponentWhenEveryonePlayedOnce = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string): string =>
     opponentIsFirstInList(tours, opponentPlaysCount)
         ? opponentPlaysCount[0].nom
         : opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
@@ -171,7 +171,7 @@ const findOpponentThatLeastPlayedAgainstPlayer = (
     opponentPlaysCount: PlayerMatchCount[],
     playerThatPlayedLeast: string,
     tourInProgress: TourInProgress
-) =>
+): string =>
     opponentPlaysCount.length === 0
         ? tourInProgress.availablePlayers
             .map(toPlayerName)
@@ -198,7 +198,7 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
 //todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
 ];
 
 const isNotInPreviousMatch =
@@ -216,7 +216,7 @@ const updateTourInProgress = (tourInProgress: TourInProgress, match: [PlayerResu
     previousTours: tourInProgress.previousTours
 });
 
-const BySimpleWhomPlayedLeast = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
+const ByMatchPlayedFrequency = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
     .fill(0)
     .reduce(
         (tourInProgress: TourInProgress): TourInProgress =>
@@ -229,9 +229,13 @@ const BySimpleWhomPlayedLeast = (players: Player[], previousTours: Tour<Ready>[]
 
 
 const addMatches = ({
-                        players,
-                        tours
-                    }: Session<Ready>, fieldCount: number): Tour<ToProcess> => BySimpleWhomPlayedLeast(players, tours, fieldCount);
+    players,
+    tours
+}: Session<Ready>, fieldCount: number): Tour<ToProcess> => {
+    //const allPlayer = players;
+    //const remainingPlayersToSort = ByMatchingLevels(players, tours, fieldCount);
+    return ByMatchPlayedFrequency(players, tours, fieldCount);
+}
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
 
@@ -258,9 +262,7 @@ const addMatchResultToLevelFor = (player: Player) => (level: number, matchResult
 
 const computeLevels = (session: Session<Ready>) => session.players.map((player: Player): Player => ({
         nom: player.nom,
-        level: session.tours.flat().reduce((level: number, matchResult: MatchResult<Ready>) => {
-            return level + scoreFunction(player.nom, matchResult)
-        }, player.level)
+        level: session.tours.flat().reduce(addMatchResultToLevelFor(player), player.level)
     })
 );
 
@@ -281,12 +283,6 @@ const scoreFunction = (playerName: string, matchResult: MatchResult<Ready>): num
 
 // todo set to double
 // todo add player in session when session is started
-
-describe('Levels', () => {
-
-    it('Pour chaque joueur nombres de match joués score pour chaque match', () => {
-    });
-});
 
 describe('add score after every tour', () => {
     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
@@ -865,8 +861,67 @@ describe("construction d'une session d'entrainement", (): void => {
         });
     });
 
+    it('should compute level at the end of a session of a Session of two players with StrongWin', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
 
-    /* it('should and compute level at the end of a session', (): void => {
+        const emptySession: Session<Ready> = makeSession([player1, player2]);
+
+        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'jeanne', score: StrongWin});
+
+        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
+
+        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
+
+        expect(playersWithNewLevels).toEqual([
+            {level: 3, nom: 'jeanne'},
+            {level: 1, nom: 'serge'},
+        ]);
+    });
+
+    it('should compute level at the end of a session of a Session of two players with Win', (): void => {
+        const player1 = makePlayer(0, 'jeanne');
+        const player2 = makePlayer(0, 'serge');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2]);
+
+        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'jeanne', score: Win});
+
+        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
+
+        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
+
+        expect(playersWithNewLevels).toEqual([
+            {level: 3, nom: 'jeanne'},
+            {level: 2, nom: 'serge'},
+        ]);
+    });
+
+    it('should compute level at the end of a session of a Session of two different players with Win', (): void => {
+        const player1 = makePlayer(0, 'paul');
+        const player2 = makePlayer(0, 'serge');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2]);
+
+        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        const sessionFinished: Session<ToProcess> = setMatchScore(sessionTour1, {nom: 'serge', score: Win});
+
+        if (!isSessionReady(sessionFinished)) throw new Error('session is not ready')
+
+        const playersWithNewLevels: Player[] = computeLevels(sessionFinished);
+
+        expect(playersWithNewLevels).toEqual([
+            {level: 2, nom: 'paul'},
+            {level: 3, nom: 'serge'},
+        ]);
+    });
+
+     it('should and compute level at the end of a session', (): void => {
          const player1 = makePlayer(0, 'jeanne');
          const player2 = makePlayer(0, 'serge');
          const player3 = makePlayer(0, 'jeannette');
@@ -896,5 +951,36 @@ describe("construction d'une session d'entrainement", (): void => {
              {level: 2, nom: 'jeannette'},
              {level: 5, nom: 'paul'}
          ]);
-     });*/
+     });
+    it('should create a session with initial level', (): void => {
+        const player1 = makePlayer(6, 'jeanne');
+        const player2 = makePlayer(15, 'serge');
+        const player3 = makePlayer(3, 'jeannette');
+        const player4 = makePlayer(14, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+
+        expect(sessionTour1).toEqual({
+            players: [
+                {level: 6, nom: "jeanne"},
+                {level: 15, nom: "serge"},
+                {level: 3, nom: "jeannette"},
+                {level: 14, nom: "paul"}
+            ],
+            tours: [
+                [
+                    [
+                        {nom: "serge", score: NotPlayed},
+                        {nom: "paul", score: NotPlayed}
+                    ],
+                    [
+                        {nom: "jeanne", score: NotPlayed},
+                        {nom: "jeannette", score: NotPlayed}
+                    ]
+                ]
+            ]
+        });
+    });
 });
