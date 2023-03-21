@@ -227,6 +227,7 @@ const ByMatchPlayedFrequency = (players: Player[], previousTours: Tour<Ready>[],
         {matchesInProgress: [], availablePlayers: players, previousTours: previousTours}
     ).matchesInProgress;
 
+//const ByLevel = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => {}
 
 const addMatches = ({
     players,
@@ -272,8 +273,8 @@ const scoreRecord: Record<MatchScore, 1 | 2 | 3> = {
     StrongWin: 1
 };
 
-    return scoreRecord[player1.score]
-}
+const isPlayerInMatch = (playerName: string, [player1, player2]: MatchResult<Ready>) =>
+    player1.nom === playerName || player2.nom === playerName;
 
 const playerScore = (playerName: string, [player1, player2]: MatchResult<Ready>) =>
     scoreRecord[player1.nom === playerName ? player2.score : player1.score];
@@ -930,10 +931,10 @@ describe("construction d'une session d'entrainement", (): void => {
          const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
  
          const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
- 
+
          const sessionTour1withMatch1Scores: Session<ToProcess> = setMatchScore(sessionTour1, { nom: 'paul', score: StrongWin});
          const sessionTour1withMatch2Scores: Session<ToProcess> = setMatchScore(sessionTour1withMatch1Scores, { nom: 'jeanne', score: Win});
- 
+
          if (!isSessionReady(sessionTour1withMatch2Scores)) throw new Error('session is not ready');
  
          const sessionTour2: Session<ToProcess> = addTourToSession(sessionTour1withMatch2Scores, 2);
@@ -948,8 +949,8 @@ describe("construction d'une session d'entrainement", (): void => {
          expect(playersWithNewLevels).toEqual([
              {level: 6, nom: 'jeanne'},
              {level: 5, nom: 'serge'},
-             {level: 2, nom: 'jeannette'},
-             {level: 5, nom: 'paul'}
+             {level: 3, nom: 'jeannette'},
+             {level: 4, nom: 'paul'}
          ]);
      });
     it('should create a session with initial level', (): void => {
