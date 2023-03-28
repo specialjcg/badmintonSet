@@ -232,7 +232,7 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
 //todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)[0]) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)[0].nom) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
 ];
 
 const isNotInPreviousMatch =
