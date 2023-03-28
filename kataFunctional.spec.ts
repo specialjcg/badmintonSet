@@ -146,18 +146,18 @@ const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], pl
     playerThatPlayedLeast
 ];
 
-const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
-    opponentPlaysCount: PlayerMatchCount[],
-    playerThatPlayedLeast: string,
-    tours: Tour<Ready>[]
-) =>
-    tours
-        .flatMap((matchResults: MatchResult<Ready>[]) => matchResults)
-        .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
-        .map(toOpponentsNames(playerThatPlayedLeast))
-        .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount)[0].nom;
+// const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
+//     opponentPlaysCount: PlayerMatchCount[],
+//     playerThatPlayedLeast: string,
+//     tours: Tour<Ready>[]
+// ): PlayerMatchCount =>
+//     tours
+//         .flatMap((matchResults: MatchResult<Ready>[]) => matchResults)
+//         .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
+//         .map(toOpponentsNames(playerThatPlayedLeast))
+//         .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
+//         .reduce(toPlayerMatchCount, [])
+//         .sort(byPlayerMatchCount)[0];
 
 const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]): boolean =>
     tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
@@ -178,18 +178,51 @@ const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerM
 //             .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))[0]
 //         : opponentWhenEveryonePlayedOnce(tourInProgress.previousTours, opponentPlaysCount, playerThatPlayedLeast);
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): string =>
-    findOpponentThatLeastPlayedAgainstPlayer(
-        tourInProgress.availablePlayers
+// const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): string =>
+//     findOpponentThatLeastPlayedAgainstPlayer(
+//         tourInProgress.availablePlayers
+//             .map(toPlayerName)
+//             .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
+//             .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
+//             .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))
+//             .reduce(toPlayerMatchCount, [])
+//             .sort(byPlayerMatchCount),
+//         playerThatPlayedLeast,
+//         tourInProgress
+//     );
+
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): string[] => {
+
+    // On récupère le nombre de fois qu'a joué chaque opposant
+    const withoutPlayer: (nom: string) => boolean = extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast);
+    const opponentPlaysCount: PlayerMatchCount[] = tourInProgress.availablePlayers
+       .map(toPlayerName)
+       .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
+       .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
+       .filter(withoutPlayer)
+       .reduce(toPlayerMatchCount, []).sort(byPlayerMatchCount);
+
+    const nobodyHasPlayedYet: boolean = opponentPlaysCount.length === 0
+     // whenNobodyHas Played Yet Return First Opponent
+
+    const opponentThatPlayedLeastAgainstPlayerInPreviousTourCo: PlayerMatchCount[] = tourInProgress.previousTours
+        .flatMap((matchResults: MatchResult<Ready>[]) => matchResults)
+        .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
+        .map(toOpponentsNames(playerThatPlayedLeast))
+        .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+
+    const opponentWhenEveryonePlayedOnceConst: PlayerMatchCount[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
+        ? opponentPlaysCount
+        : opponentThatPlayedLeastAgainstPlayerInPreviousTourCo //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
+
+    return nobodyHasPlayedYet
+        ? tourInProgress.availablePlayers
             .map(toPlayerName)
-            .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
-            .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
-            .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))
-            .reduce(toPlayerMatchCount, [])
-            .sort(byPlayerMatchCount),
-        playerThatPlayedLeast,
-        tourInProgress
-    );
+            .filter(withoutPlayer)
+        : opponentWhenEveryonePlayedOnceConst.map(toPlayerName);
+}
 
 const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     nom: nom,
@@ -198,7 +231,7 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
 //todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
+    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)[0]) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
 ];
 
 const isNotInPreviousMatch =
