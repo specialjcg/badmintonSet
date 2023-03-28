@@ -216,13 +216,12 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
 
     const opponentWhenEveryonePlayedOnceConst: PlayerMatchCount[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
         ? opponentPlaysCount
-        : opponentThatPlayedLeastAgainstPlayerInPreviousTourCo //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
+        : opponentThatPlayedLeastAgainstPlayerInPreviousTourCo; //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
 
     return nobodyHasPlayedYet
         ? tourInProgress.availablePlayers
-            .map(toPlayerName)
-            .filter(withoutPlayer)
-        : opponentWhenEveryonePlayedOnceConst.map(toPlayerName);
+            .filter((player: Player) : boolean => playerThatPlayedLeast !== player.nom) // todo: all heuristics set to 1
+        : opponentWhenEveryonePlayedOnceConst; // todo: transform PlayerMatchCount to heuristic = normalize counts
 }
 
 const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
