@@ -162,21 +162,21 @@ const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
 const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]): boolean =>
     tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
 
-const opponentWhenEveryonePlayedOnce = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string): string =>
-    opponentIsFirstInList(tours, opponentPlaysCount)
-        ? opponentPlaysCount[0].nom
-        : opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
+// const opponentWhenEveryonePlayedOnce = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string): string =>
+//     opponentIsFirstInList(tours, opponentPlaysCount)
+//         ? opponentPlaysCount[0].nom
+//         : opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tours);
 
-const findOpponentThatLeastPlayedAgainstPlayer = (
-    opponentPlaysCount: PlayerMatchCount[],
-    playerThatPlayedLeast: string,
-    tourInProgress: TourInProgress
-): string =>
-    opponentPlaysCount.length === 0
-        ? tourInProgress.availablePlayers
-            .map(toPlayerName)
-            .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))[0]
-        : opponentWhenEveryonePlayedOnce(tourInProgress.previousTours, opponentPlaysCount, playerThatPlayedLeast);
+// const findOpponentThatLeastPlayedAgainstPlayer = (
+//     opponentPlaysCount: PlayerMatchCount[],
+//     playerThatPlayedLeast: string,
+//     tourInProgress: TourInProgress
+// ): string =>
+//     opponentPlaysCount.length === 0
+//         ? tourInProgress.availablePlayers
+//             .map(toPlayerName)
+//             .filter(extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast))[0]
+//         : opponentWhenEveryonePlayedOnce(tourInProgress.previousTours, opponentPlaysCount, playerThatPlayedLeast);
 
 const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): string =>
     findOpponentThatLeastPlayedAgainstPlayer(
