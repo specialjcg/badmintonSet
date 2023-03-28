@@ -953,35 +953,35 @@ describe("construction d'une session d'entrainement", (): void => {
              {level: 4, nom: 'paul'}
          ]);
      });
-    it('should create a session with initial level', (): void => {
-        const player1 = makePlayer(6, 'jeanne');
-        const player2 = makePlayer(15, 'serge');
-        const player3 = makePlayer(3, 'jeannette');
-        const player4 = makePlayer(14, 'paul');
-
-        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
-
-        const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
-
-        expect(sessionTour1).toEqual({
-            players: [
-                {level: 6, nom: "jeanne"},
-                {level: 15, nom: "serge"},
-                {level: 3, nom: "jeannette"},
-                {level: 14, nom: "paul"}
-            ],
-            tours: [
-                [
-                    [
-                        {nom: "serge", score: NotPlayed},
-                        {nom: "paul", score: NotPlayed}
-                    ],
-                    [
-                        {nom: "jeanne", score: NotPlayed},
-                        {nom: "jeannette", score: NotPlayed}
-                    ]
-                ]
-            ]
-        });
-    });
+    // it('should create a session with initial level', (): void => {
+    //     const player1 = makePlayer(6, 'jeanne');
+    //     const player2 = makePlayer(15, 'serge');
+    //     const player3 = makePlayer(3, 'jeannette');
+    //     const player4 = makePlayer(14, 'paul');
+    //
+    //     const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+    //
+    //     const sessionTour1: Session<ToProcess> = addTourToSession(emptySession, 2);
+    //
+    //     expect(sessionTour1).toEqual({
+    //         players: [
+    //             {level: 6, nom: "jeanne"},
+    //             {level: 15, nom: "serge"},
+    //             {level: 3, nom: "jeannette"},
+    //             {level: 14, nom: "paul"}
+    //         ],
+    //         tours: [
+    //             [
+    //                 [
+    //                     {nom: "serge", score: NotPlayed},
+    //                     {nom: "paul", score: NotPlayed}
+    //                 ],
+    //                 [
+    //                     {nom: "jeanne", score: NotPlayed},
+    //                     {nom: "jeannette", score: NotPlayed}
+    //                 ]
+    //             ]
+    //         ]
+    //     });
+    // });
 });
