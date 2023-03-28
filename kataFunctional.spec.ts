@@ -191,7 +191,8 @@ const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerM
 //         tourInProgress
 //     );
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): string[] => {
+// todo: Return Type is PlayerHeuristic
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): (Player | PlayerMatchCount)[] => {
 
     // On récupère le nombre de fois qu'a joué chaque opposant
     const withoutPlayer: (nom: string) => boolean = extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast);
