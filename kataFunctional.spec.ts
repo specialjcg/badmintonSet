@@ -191,21 +191,36 @@ const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerM
 //         tourInProgress
 //     );
 
-// todo: Return Type is PlayerHeuristic
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): (Player | PlayerMatchCount)[] => {
+type PlayerHeuristic = {
+    nom: string;
+    heuristic: number;
+}
 
+const playersWithScoreToPlayerHeuristic = (player : Player): PlayerHeuristic => ({ nom: player.nom, heuristic: 1 })
+
+// todo: transform PlayerMatchCount to heuristic = normalize counts
+const playersMatchCountToPlayerHeuristic = (players : PlayerMatchCount[]): PlayerHeuristic[] => {
+    return players.map((playerMathchCount: PlayerMatchCount ): PlayerHeuristic => ({ nom: playerMathchCount.nom, heuristic: playerMathchCount.count  }) );
+}
+
+const selectFromHeurist = (playerLikeArray: PlayerHeuristic[]) =>  playerLikeArray[0].nom
+
+
+// todo: faire fonctionner  PlayerHeuristic
+const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): PlayerHeuristic[] => {
     // On récupère le nombre de fois qu'a joué chaque opposant
     const withoutPlayer: (nom: string) => boolean = extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast);
     const opponentPlaysCount: PlayerMatchCount[] = tourInProgress.availablePlayers
-       .map(toPlayerName)
-       .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
-       .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
-       .filter(withoutPlayer)
-       .reduce(toPlayerMatchCount, []).sort(byPlayerMatchCount);
-
+        .map(toPlayerName)
+        .concat(withAllPlayersFromAllPreviousTours(tourInProgress.previousTours))
+        .filter(extractOpponentsFromParallelMatches(tourInProgress.matchesInProgress))
+        .filter(withoutPlayer)
+        .reduce(toPlayerMatchCount, [])
+        .sort(byPlayerMatchCount);
+    
     const nobodyHasPlayedYet: boolean = opponentPlaysCount.length === 0
      // whenNobodyHas Played Yet Return First Opponent
-
+    
     const opponentThatPlayedLeastAgainstPlayerInPreviousTourCo: PlayerMatchCount[] = tourInProgress.previousTours
         .flatMap((matchResults: MatchResult<Ready>[]) => matchResults)
         .filter(allMatchesFromPreviousToursForPlayer(playerThatPlayedLeast))
@@ -213,10 +228,11 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         .filter(playersNotInList(listOfPlayersThatPlayedLeast(opponentPlaysCount, playerThatPlayedLeast)))
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
+    
+    const opponentWhenEveryonePlayedOnceConst: PlayerHeuristic[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
+        ? playersMatchCountToPlayerHeuristic(opponentPlaysCount)
+        : playersMatchCountToPlayerHeuristic(opponentThatPlayedLeastAgainstPlayerInPreviousTourCo); //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
 
-    const opponentWhenEveryonePlayedOnceConst: PlayerMatchCount[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
-        ? opponentPlaysCount
-        : opponentThatPlayedLeastAgainstPlayerInPreviousTourCo; //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
 
     return nobodyHasPlayedYet
         ? tourInProgress.availablePlayers
