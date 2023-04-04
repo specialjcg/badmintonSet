@@ -141,12 +141,12 @@ const playersNotInList =
 const opponentThatPlayedMoreThanOthers = (minimalPlayedCount: number) => (playerMatchCount: PlayerMatchCount): boolean =>
     playerMatchCount.count !== minimalPlayedCount;
 
+// const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
+
 const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], playerThatPlayedLeast: string): string[] => [
     ...opponentPlaysCount.filter(opponentThatPlayedMoreThanOthers(opponentPlaysCount[0].count)).map(toPlayerName),
     playerThatPlayedLeast
 ];
-
-// const opponentThatPlayedLeastAgainstPlayerInPreviousTour = (
 //     opponentPlaysCount: PlayerMatchCount[],
 //     playerThatPlayedLeast: string,
 //     tours: Tour<Ready>[]
@@ -235,19 +235,23 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
 
 
     return nobodyHasPlayedYet
-        ? tourInProgress.availablePlayers
-            .filter((player: Player) : boolean => playerThatPlayedLeast !== player.nom) // todo: all heuristics set to 1
-        : opponentWhenEveryonePlayedOnceConst; // todo: transform PlayerMatchCount to heuristic = normalize counts
+        ? (tourInProgress.availablePlayers
+            .filter((player: Player) : boolean => playerThatPlayedLeast !== player.nom)).map(playersWithScoreToPlayerHeuristic) //[{player: 'JJ', heuristic: '1'}]
+        : opponentWhenEveryonePlayedOnceConst; //[{player: 'JJ', heuristic: '49'}]
 }
 
 const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     nom: nom,
     score: NotPlayed
 });
+
 //todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
-    makePlayerResult(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress)[0].nom) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
+    makePlayerResult(
+        selectFromHeurist(
+        opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
+    ) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
 ];
 
 const isNotInPreviousMatch =
