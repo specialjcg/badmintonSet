@@ -359,6 +359,8 @@ const scoreFunction = (playerName: string, matchResult: MatchResult<Ready>): num
 // todo set to double
 // todo add player in session when session is started
 
+
+
 describe('add score after every tour', () => {
     it('should use level to associate player  to first tour ', () => {
         const player1 = makePlayer(10, 'jeanne');
