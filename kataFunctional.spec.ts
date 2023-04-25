@@ -203,7 +203,7 @@ const playersMatchCountToPlayerHeuristic = (players : PlayerMatchCount[]): Playe
     return players.map((playerMathchCount: PlayerMatchCount ): PlayerHeuristic => ({ nom: playerMathchCount.nom, heuristic: playerMathchCount.count  }) );
 }
 
-const selectFromHeurist = (playerLikeArray: PlayerHeuristic[]) =>  playerLikeArray[0].nom
+const selectFromHeuristic = (playerLikeArray: PlayerHeuristic[]) =>  playerLikeArray[0].nom
 
 
 // todo: faire fonctionner  PlayerHeuristic
@@ -229,7 +229,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
     
-    const opponentWhenEveryonePlayedOnceConst: PlayerHeuristic[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
+    const opponentWhenEveryonePlayedOnce: PlayerHeuristic[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
         ? playersMatchCountToPlayerHeuristic(opponentPlaysCount)
         : playersMatchCountToPlayerHeuristic(opponentThatPlayedLeastAgainstPlayerInPreviousTourCo); //opponentThatPlayedLeastAgainstPlayerInPreviousTour(opponentPlaysCount, playerThatPlayedLeast, tourInProgress.previousTours);
 
@@ -237,7 +237,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
     return nobodyHasPlayedYet
         ? (tourInProgress.availablePlayers
             .filter((player: Player) : boolean => playerThatPlayedLeast !== player.nom)).map(playersWithScoreToPlayerHeuristic) //[{player: 'JJ', heuristic: '1'}]
-        : opponentWhenEveryonePlayedOnceConst; //[{player: 'JJ', heuristic: '49'}]
+        : opponentWhenEveryonePlayedOnce; //[{player: 'JJ', heuristic: '49'}]
 }
 
 const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
@@ -269,8 +269,9 @@ const opponentWithNearestLevel = (playerHeuristics: PlayerHeuristic[], playerNam
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
     makePlayerResult(
-        selectFromHeurist(
-        opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
+        selectFromHeuristic(
+        // opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress))
+        opponentWithNearestLevel(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress), playerName, tourInProgress))
     ) // todo: on nearest level if multiple choices for opponent (multiple opponent have least played the same number of matches against selected player)
 ];
 
