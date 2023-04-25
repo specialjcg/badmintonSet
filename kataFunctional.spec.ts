@@ -245,6 +245,26 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     score: NotPlayed
 });
 
+const opponentWithNearestLevel = (playerHeuristics: PlayerHeuristic[], playerName: string, tourInProgress: TourInProgress): PlayerHeuristic[] => {
+    // return playerHeuristics; // todo: it works fo the other (failing) case
+    const highestPlayerHeuristic: PlayerHeuristic = playerHeuristics.sort((playerHeuristicA: PlayerHeuristic, playerHeuristicB: PlayerHeuristic) => playerHeuristicB.heuristic - playerHeuristicA.heuristic)[0];
+
+    const defaultOpponent: Player | undefined = tourInProgress.availablePlayers.find((player: Player) => player.nom === highestPlayerHeuristic.nom);
+
+    const playerLevel: number = tourInProgress.availablePlayers.find((player: Player) => player.nom === playerName)?.level ?? 0;
+    const opponents: Player[] = tourInProgress.availablePlayers.filter((player: Player) => player.nom !== playerName);
+
+    return [{
+        nom: opponents.reduce((nearestPlayer: Player, player: Player) => {
+            const previousLevelDiff: number = Math.abs(playerLevel - nearestPlayer.level);
+            const currentLevelDiff: number = Math.abs(playerLevel - player.level);
+
+            return previousLevelDiff <= currentLevelDiff ? nearestPlayer : player;
+        }, defaultOpponent ?? opponents[0]).nom,
+        heuristic: 1
+    }];
+};
+
 //todo trier par level la stratégie des matches | tout en gardant un equilibre entre toutes les rencontres entre joueurs
 const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
     makePlayerResult(playerName),
@@ -339,6 +359,55 @@ const scoreFunction = (playerName: string, matchResult: MatchResult<Ready>): num
 // todo add player in session when session is started
 
 describe('add score after every tour', () => {
+    it('should use level to associate player  to first tour ', () => {
+        const player1 = makePlayer(10, 'jeanne');
+        const player2 = makePlayer(1, 'serge');
+        const player3 = makePlayer(2, 'jeannette');
+        const player4 = makePlayer(9, 'paul');
+
+        const emptySession: Session<Ready> = makeSession([player1, player2, player3, player4]);
+
+        const session1: Session<ToProcess> = addTourToSession(emptySession, 2);
+        const session1WithScoreForMatch1 = setMatchScore(session1, {nom: "jeanne", score: Win})
+        const session1WithScoreForMatch2 = setMatchScore(session1WithScoreForMatch1, {
+            nom: "jeannette",
+            score: StrongWin
+        })
+
+        expect(setMatchScore(session1WithScoreForMatch2, {nom: "jeanne", score: Win})).toEqual({
+            players: [
+                {level: 10, nom: 'jeanne'},
+                {level: 1, nom: 'serge'},
+                {level: 2, nom: 'jeannette'},
+                {level: 9, nom: 'paul'}
+            ],
+            tours: [
+                [
+                    [
+                        {
+                            nom: 'jeanne',
+                            score: Win
+                        },
+                        {
+                            nom: 'paul',
+                            score: Lose
+                        }
+                    ],
+                    [
+                        {
+                            nom: 'serge',
+                            score: Lose
+                        },
+                        {
+                            nom: 'jeannette',
+                            score: StrongWin
+                        }
+                    ]
+                ]
+            ]
+        });
+    });
+
     it('should set score at the end to last Tour jeanne win against serge and paul strong win against jeanette', () => {
         const player1 = makePlayer(0, 'jeanne');
         const player2 = makePlayer(0, 'serge');
