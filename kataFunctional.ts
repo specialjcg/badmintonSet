@@ -1,19 +1,4 @@
-import {
-    Lose,
-    MatchResult, MatchScore,
-    NotPlayed,
-    Player,
-    PlayerHeuristic,
-    PlayerMatchCount,
-    PlayerResult,
-    Ready,
-    Session,
-    Status,
-    ToProcess, Tour, TourInProgress, Winner
-} from "./models";
-
-
-
+import {Lose, MatchResult, PlayerResult, Ready, Status, ToProcess, Tour, Winner} from "./models";
 
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom
