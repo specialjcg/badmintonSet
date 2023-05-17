@@ -1,5 +1,5 @@
-import {MatchResult, MatchScore, PlayerResult, Ready, Session, Status, ToProcess, Tour} from "./session";
-import {Winner} from "./player";
+import {Ready, Session, Status, ToProcess, Tour} from "./session";
+import {Winner, isPlayerInMatch} from "./player";
 
 export const NotPlayed = 'NotPlayed' as const;
 
@@ -8,6 +8,20 @@ export const Lose = 'Lose' as const;
 export const Win = 'Win' as const;
 
 export const StrongWin = 'StrongWin' as const;
+
+export type MatchScore = typeof Lose | typeof Win | typeof StrongWin;
+
+export type PlayerResult<T extends Status> = {
+    nom: string;
+    score: T extends Ready ? MatchScore : typeof NotPlayed;
+};
+
+export type MatchResult<T extends Status> = [PlayerResult<T>, PlayerResult<T>];
+
+export const setMatchScore = ({players, tours}: Session<ToProcess>, winner: Winner): Session<ToProcess> => ({
+    players,
+    tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
+});
 
 const previous = (tours: Tour<Status>[]): Tour<Ready>[] => tours.slice(0, -1);
 
@@ -24,11 +38,6 @@ const toMatchesWithScoreFor = (winner: Winner) => (matchResult: MatchResult<Stat
 
 const setMatchesScoreForLast = (tours: Tour<Status>[], winner: Winner): Tour<Status> => (tours.at(-1) ?? []).map(toMatchesWithScoreFor(winner));
 
-export const setMatchScore = ({players, tours}: Session<ToProcess>, winner: Winner): Session<ToProcess> => ({
-    players,
-    tours: [...(previous(tours)), setMatchesScoreForLast(tours, winner)]
-});
-
 const scoreRecord: Record<MatchScore, 1 | 2 | 3> = {
     Lose: 3,
     Win: 2,
@@ -38,9 +47,5 @@ const scoreRecord: Record<MatchScore, 1 | 2 | 3> = {
 export const playerScore = (playerName: string, [player1, player2]: MatchResult<Ready>) =>
     scoreRecord[player1.nom === playerName ? player2.score : player1.score];
 
-const isPlayerInMatch = (playerName: string, [player1, player2]: MatchResult<Ready>) =>
-    player1.nom === playerName || player2.nom === playerName;
-
-const scoreFunction = (playerName: string, matchResult: MatchResult<Ready>): number =>
+export const matchLevelForPlayer = (playerName: string, matchResult: MatchResult<Ready>): number =>
     isPlayerInMatch(playerName, matchResult) ? playerScore(playerName, matchResult) : 0;
-

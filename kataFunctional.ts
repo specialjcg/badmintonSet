@@ -1,4 +1,4 @@
-import {Lose, MatchResult, PlayerResult, Ready, Status, ToProcess, Tour, Winner} from "./models";
+import {Lose, MatchResult, PlayerResult, Ready, Status, ToProcess, Tour, Winner} from "./src";
 
 
 const hasWinner = ([playerResult1, playerResult2]: MatchResult<Status>, winner: Winner) => playerResult1.nom === winner.nom || playerResult2.nom === winner.nom

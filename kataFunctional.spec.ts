@@ -8,7 +8,7 @@ import {
     StrongWin,
     ToProcess,
     Win
-} from "./models";
+} from "./src";
 
 // todo set to double
 // todo add player in session when session is started
