@@ -1,39 +1,8 @@
-import {TourInProgress} from "./tourInProgress";
-import {byPlayerMatchCount, Player, PlayerMatchCount, toPlayerMatchCount, toPlayerName} from "./player";
-import {MatchResult, PlayerResult} from "./score";
-import {Ready, ToProcess, Tour} from "./session";
-
-export type PlayerHeuristic = {
-    nom: string;
-    heuristic: number;
-}
-
-const selectFromHeuristic = (playerLikeArray: PlayerHeuristic[]) => playerLikeArray[0].nom
-
-export const applyStrategies = (playerName: string, tourInProgress: TourInProgress) => selectFromHeuristic(
-    opponentWithNearestLevel(opponentThatLeastPlayedAgainstPlayer(playerName, tourInProgress), playerName, tourInProgress));
-
-// region  Level Related strategy
-const opponentWithNearestLevel = (playerHeuristics: PlayerHeuristic[], playerName: string, tourInProgress: TourInProgress): PlayerHeuristic[] => {
-    const highestPlayerHeuristic: PlayerHeuristic = playerHeuristics.sort((playerHeuristicA: PlayerHeuristic, playerHeuristicB: PlayerHeuristic) =>
-        playerHeuristicA.heuristic - playerHeuristicB.heuristic)[0];
-
-    const playerLevel: number = tourInProgress.availablePlayers.find((player: Player) => player.nom === playerName)?.level ?? 0;
-    const opponents: Player[] = tourInProgress.availablePlayers.filter((player: Player) => player.nom !== playerName);
-
-    const defaultOpponent: Player = tourInProgress.availablePlayers.find((player: Player) => player.nom === highestPlayerHeuristic.nom) ?? opponents[0];
-
-    return [{
-        nom: opponents.reduce((nearestPlayer: Player, player: Player): Player => {
-            const previousLevelDiff: number = Math.abs(playerLevel - nearestPlayer.level);
-            const currentLevelDiff: number = Math.abs(playerLevel - player.level);
-
-            return previousLevelDiff <= currentLevelDiff ? nearestPlayer : player;
-        }, defaultOpponent).nom,
-        heuristic: 1
-    }];
-};
-//endregion
+import {TourInProgress} from "../../tourInProgress";
+import {byPlayerMatchCount, Player, PlayerMatchCount, toPlayerMatchCount, toPlayerName} from "../../player";
+import {MatchResult, PlayerResult} from "../../score";
+import {Ready, ToProcess, Tour} from "../../session";
+import {OpponentHeuristic} from "./heuristic";
 
 const extractPlayerSoHeCannotPlayAgainstHimself = (playerThatPlayedLeast: string) => (nom: string): boolean =>
     playerThatPlayedLeast !== nom;
@@ -46,13 +15,13 @@ const withAllPlayersFromAllPreviousTours = (tours: Tour<Ready>[]) =>
         ])
     );
 
-const playersMatchCountToPlayerHeuristic = (players: PlayerMatchCount[]): PlayerHeuristic[] =>
-    players.map((playerMatchCount: PlayerMatchCount): PlayerHeuristic => ({
+const playersMatchCountToPlayerHeuristic = (players: PlayerMatchCount[]): OpponentHeuristic[] =>
+    players.map((playerMatchCount: PlayerMatchCount): OpponentHeuristic => ({
         nom: playerMatchCount.nom,
         heuristic: playerMatchCount.count
     }))
 
-const playersWithScoreToPlayerHeuristic = (player: Player): PlayerHeuristic => ({nom: player.nom, heuristic: 1})
+const playersWithScoreToPlayerHeuristic = (player: Player): OpponentHeuristic => ({nom: player.nom, heuristic: 1})
 
 const allMatchesFromPreviousToursForPlayer =
     (playerThatPlayedLeast: string) =>
@@ -72,7 +41,6 @@ const playersNotInList =
 const opponentIsFirstInList = (tours: Tour<Ready>[], opponentPlaysCount: PlayerMatchCount[]): boolean =>
     tours.length === 0 || opponentPlaysCount.length === 1 || opponentPlaysCount[0].count < opponentPlaysCount[1].count;
 
-//region Match Count related strategy
 const opponentThatPlayedMoreThanOthers = (minimalPlayedCount: number) => (playerMatchCount: PlayerMatchCount): boolean =>
     playerMatchCount.count !== minimalPlayedCount;
 
@@ -80,7 +48,6 @@ const listOfPlayersThatPlayedLeast = (opponentPlaysCount: PlayerMatchCount[], pl
     ...opponentPlaysCount.filter(opponentThatPlayedMoreThanOthers(opponentPlaysCount[0].count)).map(toPlayerName),
     playerThatPlayedLeast
 ];
-//endregion
 
 const onlyAvailableOpponents =
     (matchResults: MatchResult<ToProcess>[]) =>
@@ -89,7 +56,7 @@ const onlyAvailableOpponents =
                 .flatMap(([playerResult1, playerResult2]: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]) => [playerResult1.nom, playerResult2.nom])
                 .includes(opponentName);
 
-const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tourInProgress: TourInProgress): PlayerHeuristic[] => {
+export const opponentThatLeastPlayedAgainstPlayerStrategy = (opponentHeuristics: OpponentHeuristic[], playerThatPlayedLeast: string, tourInProgress: TourInProgress): OpponentHeuristic[] => {
     const withoutPlayer: (nom: string) => boolean = extractPlayerSoHeCannotPlayAgainstHimself(playerThatPlayedLeast);
     const opponentPlaysCount: PlayerMatchCount[] = tourInProgress.availablePlayers
         .map(toPlayerName)
@@ -109,7 +76,7 @@ const opponentThatLeastPlayedAgainstPlayer = (playerThatPlayedLeast: string, tou
         .reduce(toPlayerMatchCount, [])
         .sort(byPlayerMatchCount);
 
-    const opponentWhenEveryonePlayedOnce: PlayerHeuristic[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
+    const opponentWhenEveryonePlayedOnce: OpponentHeuristic[] = opponentIsFirstInList(tourInProgress.previousTours, opponentPlaysCount)
         ? playersMatchCountToPlayerHeuristic(opponentPlaysCount)
         : playersMatchCountToPlayerHeuristic(opponentThatPlayedLeastAgainstPlayerInPreviousTourCo);
 
