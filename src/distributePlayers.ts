@@ -1,8 +1,11 @@
-import {byPlayerMatchCount, Player, playersPairs, toPlayerMatchCount, toPlayerName} from "./player";
+import {Player, playersPairs, toPlayerName} from "./player";
 import {TourInProgress} from "./tourInProgress";
 import {Ready, ToProcess, Tour} from "./session";
 import {MatchResult, NotPlayed, PlayerResult} from "./score";
-import {applyStrategies} from "./heuristic";
+import {playerThatLeastPlayedInPreviousToursStrategy} from "./strategies/player/leastPlayedInPreviousToursStrategy";
+import {opponentWithNearestLevelStrategy} from "./strategies/opponent/withNearestLevelStrategy";
+import {opponentThatLeastPlayedAgainstPlayerStrategy} from "./strategies/opponent/leastPlayedAgainstPlayerStrategy";
+import {OpponentHeuristic, OpponentStrategy, PlayerStrategy} from "./strategies/opponent/heuristic";
 
 const possibleMatchesCountInTour = (players: Player[], fieldCount: number) => Math.min(playersPairs(players), fieldCount);
 
@@ -22,28 +25,31 @@ const makePlayerResult = (nom: string): PlayerResult<ToProcess> => ({
     score: NotPlayed
 });
 
-const onlyAvailableOpponents =
-    (matchResults: MatchResult<ToProcess>[]) =>
-        (opponentName: string): boolean =>
-            !matchResults
-                .flatMap(([playerResult1, playerResult2]: [PlayerResult<ToProcess>, PlayerResult<ToProcess>]) => [playerResult1.nom, playerResult2.nom])
-                .includes(opponentName);
+export const makeMatchResult = (playerStrategy: PlayerStrategy, opponentStrategies: OpponentStrategy[], tourInProgress: TourInProgress): MatchResult<ToProcess> => {
+    const playerName: string = playerStrategy(tourInProgress);
 
-const makeMatchResult = (playerName: string, tourInProgress: TourInProgress): MatchResult<ToProcess> => [
-    makePlayerResult(playerName),
-    makePlayerResult(applyStrategies(playerName, tourInProgress))
-];
+    return [
+        makePlayerResult(playerName),
+        makePlayerResult(opponentStrategies.reduce((opponentHeuristics: OpponentHeuristic[], opponentStrategy: OpponentStrategy): OpponentHeuristic[] => {
+            return opponentStrategy(opponentHeuristics, playerName, tourInProgress);
+        }, [])[0].nom)
+    ]
+}
 
-const withToursPlayersNames = (matchResults: MatchResult<Ready>[]): string[] =>
-    matchResults.flatMap((matchResult) => [matchResult[0].nom, matchResult[1].nom]);
+export const makeMatchResult1 = (playerStrategy: PlayerStrategy, opponentStrategies: OpponentStrategy[], tourInProgress: TourInProgress): MatchResult<ToProcess> => {
+    const playerName: string = playerStrategy(tourInProgress);
 
-const playerThatLeastPlayedInPreviousTours = (tourInProgress: TourInProgress): string =>
-    tourInProgress.availablePlayers
-        .map(toPlayerName)
-        .concat(tourInProgress.previousTours.flatMap((tour: Tour<Ready>) => withToursPlayersNames(tour)))
-        .filter(onlyAvailableOpponents(tourInProgress.matchesInProgress))
-        .reduce(toPlayerMatchCount, [])
-        .sort(byPlayerMatchCount)[0].nom;
+    return [
+        makePlayerResult(playerName),
+        // todo: continue sort to get Monique instead of Serge
+        //  then create another test with multiple strategies to introduce a reduce that returns an OpponentHeuristic that contains the sum of all OpponentHeuristic[]
+        makePlayerResult(opponentStrategies.map((opponentStrategy: OpponentStrategy): OpponentHeuristic[] => {
+            return opponentStrategy([], playerName, tourInProgress);
+        }, []).sort((opponentHeuristic1: OpponentHeuristic, opponentHeuristic2: OpponentHeuristic) => {
+            opponentHeuristic2.heuristic - opponentHeuristic1.heuristic
+        }))
+    ]
+}
 
 export const nextTour = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
     .fill(0)
@@ -51,7 +57,7 @@ export const nextTour = (players: Player[], previousTours: Tour<Ready>[], fieldC
         (tourInProgress: TourInProgress): TourInProgress =>
             updateTourInProgress(
                 tourInProgress,
-                makeMatchResult(playerThatLeastPlayedInPreviousTours(tourInProgress), tourInProgress)
+                makeMatchResult(playerThatLeastPlayedInPreviousToursStrategy, [opponentThatLeastPlayedAgainstPlayerStrategy, opponentWithNearestLevelStrategy], tourInProgress)
             ),
         {matchesInProgress: [], availablePlayers: players, previousTours: previousTours}
     ).matchesInProgress;
