@@ -54,4 +54,42 @@ describe('distribute player', function () {
             {nom: 'Monique', score: NotPlayed}
         ]);
     });
+
+    it('should select opponent with highest heuristic with multiple strategies', function () {
+        const Progress: TourInProgress = {
+            matchesInProgress: [],
+            availablePlayers: [],
+            previousTours: []
+        };
+        const playerStrategy: PlayerStrategy = () => 'Serge';
+        const opponentStrategies: OpponentStrategy[] = [
+            () => [
+                {
+                    nom: 'Jeanne',
+                    heuristic: 0.1
+                },
+                {
+                    nom: 'Monique',
+                    heuristic: 0.8
+                }
+            ],
+            () => [
+                {
+                    nom: 'Jeanne',
+                    heuristic: 0.8
+                },
+                {
+                    nom: 'Monique',
+                    heuristic: 0.2
+                }
+            ]
+        ]
+
+        const matchResult: MatchResult<ToProcess> = makeMatchResult1(playerStrategy, opponentStrategies, Progress);
+
+        expect(matchResult).toStrictEqual([
+            {nom: 'Serge', score: NotPlayed},
+            {nom: 'Monique', score: NotPlayed}
+        ]);
+    });
 });

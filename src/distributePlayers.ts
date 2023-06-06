@@ -41,13 +41,12 @@ export const makeMatchResult1 = (playerStrategy: PlayerStrategy, opponentStrateg
 
     return [
         makePlayerResult(playerName),
-        // todo: continue sort to get Monique instead of Serge
-        //  then create another test with multiple strategies to introduce a reduce that returns an OpponentHeuristic that contains the sum of all OpponentHeuristic[]
-        makePlayerResult(opponentStrategies.map((opponentStrategy: OpponentStrategy): OpponentHeuristic[] => {
-            return opponentStrategy([], playerName, tourInProgress);
-        }, []).sort((opponentHeuristic1: OpponentHeuristic, opponentHeuristic2: OpponentHeuristic) => {
-            opponentHeuristic2.heuristic - opponentHeuristic1.heuristic
-        }))
+        makePlayerResult(
+            selectFromHeuristic(opponentStrategies
+                .flatMap(toAppliedOpponentStrategies(playerName, tourInProgress))
+                .reduce(toMergedOpponentHeuristics, [])
+            )
+        )
     ]
 }
 
