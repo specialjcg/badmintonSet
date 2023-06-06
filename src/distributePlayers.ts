@@ -50,6 +50,36 @@ export const makeMatchResult1 = (playerStrategy: PlayerStrategy, opponentStrateg
     ]
 }
 
+const toAppliedOpponentStrategies = (playerName: string, tourInProgress: TourInProgress) => (opponentStrategy: OpponentStrategy): OpponentHeuristic[] => opponentStrategy([], playerName, tourInProgress)
+
+const toMergedOpponentHeuristics = (mergedHeuristics: OpponentHeuristic[], opponentHeuristic: OpponentHeuristic): OpponentHeuristic[] => {
+    const opponentName: string = opponentHeuristic.nom;
+    const mergedOpponentHeuristic: OpponentHeuristic | undefined = mergedHeuristics.find((mergedHeuristic: OpponentHeuristic) => mergedHeuristic.nom === opponentName);
+
+    if (mergedOpponentHeuristic == null) {
+        return [
+            ...mergedHeuristics,
+            opponentHeuristic
+        ]
+    }
+
+    const mergedHeuristicsWithoutOpponent: OpponentHeuristic[] = mergedHeuristics.filter((heuristic: OpponentHeuristic): boolean => {
+        return heuristic.nom !== mergedOpponentHeuristic.nom;
+    })
+
+    return [
+        ...mergedHeuristicsWithoutOpponent,
+        {
+            nom: opponentName,
+            heuristic: opponentHeuristic.heuristic + mergedOpponentHeuristic.heuristic
+        }
+    ]
+}
+
+const byHighestHeuristic  = (opponentHeuristics1: OpponentHeuristic, opponentHeuristics2: OpponentHeuristic): number => opponentHeuristics2.heuristic - opponentHeuristics1.heuristic
+
+const selectFromHeuristic = (opponentHeuristic: OpponentHeuristic[]): string => opponentHeuristic.sort(byHighestHeuristic)[0].nom
+
 export const nextTour = (players: Player[], previousTours: Tour<Ready>[], fieldCount: number): Tour<ToProcess> => new Array(possibleMatchesCountInTour(players, fieldCount))
     .fill(0)
     .reduce(
